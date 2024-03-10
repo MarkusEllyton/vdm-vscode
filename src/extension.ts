@@ -36,6 +36,7 @@ import { ChangeVdmjPropertiesHandler } from "./handlers/ChangeVdmjPropertiesHand
 import * as Util from "./util/Util";
 import { RTLogViewHandler } from "./handlers/RTLogViewHandler";
 import { FMUHandler } from "./handlers/FMUHandler";
+import { QuickInterpreter } from "./quickinterpreter/QuickInterpreter";
 
 let clientManager: ClientManager;
 
@@ -99,6 +100,8 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(generateCoverageButton);
     context.subscriptions.push(new RTLogViewHandler(context, knownVdmFolders));
     context.subscriptions.push(new CoverageOverlay(generateCoverageButton.eventEmitter, vdmFileExtensions));
+
+    context.subscriptions.push(new QuickInterpreter());
 
     // Initialise handlers
     context.subscriptions.push(new AddLibraryHandler(clientManager));

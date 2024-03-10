@@ -62,6 +62,14 @@
         "onCommand:vdm-vscode.openServerLogFolder"
     ],
     "contributes": {
+        "terminal": {
+            "profiles": [
+                {
+                    "title": "VDM Quick Interpreter",
+                    "id": "vdm-vscode.quick-interpreter-profile"
+                }
+            ]
+        },
         "configurationDefaults": {
             "editor.tokenColorCustomizations": {
                 "textMateRules": [
