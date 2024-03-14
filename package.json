@@ -191,6 +191,11 @@
         ],
         "commands": [
             {
+                "command": "vdm-vscode.run-quick-interpreter",
+                "title": "Launch Quick Interpreter",
+                "category": "VDM"
+            },
+            {
                 "command": "vdm-vscode.changeVdmjProperties",
                 "title": "Change Project Wide VDMJ Properties",
                 "category": "VDM"
