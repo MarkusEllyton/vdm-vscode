@@ -1,3 +1,6 @@
+### 1.4.0-beta.5
+- Show incremental progress during QuickCheck runs.
+
 ### 1.4.0-beta.4
 - Add visual progress indicator when QuickCheck is running.
 - Show cancel button instead of "Run QuickCheck" during long-running QuickCheck.

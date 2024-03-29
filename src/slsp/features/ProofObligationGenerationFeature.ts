@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import * as util from "../../util/Util";
-import { window, Uri, EventEmitter } from "vscode";
+import { window, Uri, EventEmitter, Progress } from "vscode";
 import {
     StaticFeature,
     ClientCapabilities,
@@ -9,6 +9,7 @@ import {
     DocumentSelector,
     Disposable,
     CancellationToken,
+    WorkDoneProgress,
 } from "vscode-languageclient";
 import { ProofObligationPanel, ProofObligationProvider } from "../views/ProofObligationPanel";
 import {
@@ -30,6 +31,8 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
     private _onDidChangeProofObligations: EventEmitter<boolean>;
     private _disposables: Disposable[] = [];
     private _selector: DocumentSelector;
+    private _generateCalls: number = 0;
+    private _progress: number = 0;
 
     constructor(private _client: SpecificationLanguageClient) {}
 
@@ -54,7 +57,15 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             provideProofObligations: (uri: Uri) => this.requestPOG(uri),
             onDidChangeProofObligations: this._onDidChangeProofObligations.event,
             quickCheckProvider: quickCheckEnabled,
-            runQuickCheck: (wsFolder: Uri, poIds: number[], token?: CancellationToken) => this.runQuickCheck(wsFolder, poIds, token),
+            runQuickCheck: (
+                wsFolder: Uri,
+                poIds: number[],
+                token?: CancellationToken,
+                progress?: Progress<{
+                    message?: string;
+                    increment?: number;
+                }>
+            ) => this.runQuickCheck(wsFolder, poIds, token, progress),
         };
         this._disposables.push(ProofObligationPanel.registerProofObligationProvider(this._selector, provider));
     }
@@ -89,13 +100,34 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
         });
     }
 
-    private runQuickCheck(wsFolder: Uri, poIds: number[], cancellationToken?: CancellationToken): Thenable<QuickCheckInfo[]> {
+    private runQuickCheck(
+        wsFolder: Uri,
+        poIds: number[],
+        cancellationToken?: CancellationToken,
+        progress?: Progress<{
+            message?: string;
+            increment?: number;
+        }>
+    ): Thenable<QuickCheckInfo[]> {
+        let workDoneToken = null;
+        if (progress) {
+            workDoneToken = this.generateToken();
+            const progressDisp = this._client.onProgress(WorkDoneProgress.type, workDoneToken, (value) => {
+                if (value.kind !== "end" && value?.percentage) {
+                    progress.report({ message: `${value.message} - ${value.percentage}%`, increment: value.percentage - this._progress });
+                    this._progress = value.percentage;
+                }
+            });
+            this._disposables.push(progressDisp);
+        }
+
         return new Promise((resolve, reject) => {
             readOptionalConfiguration(wsFolder, "quickcheck.json", (config: RunQuickCheckRequestParams) => {
                 const configWithObligations = mergeDeep(config ?? {}, {
                     config: {
                         obligations: poIds,
                     },
+                    workDoneToken: workDoneToken,
                 });
 
                 this._client
@@ -104,6 +136,10 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
                     .catch((e) => reject(`QuickCheck failed. ${e}`));
             });
         });
+    }
+
+    private generateToken() {
+        return "ProofObligationGenerationToken-" + Date.now().toString() + (this._generateCalls++).toString();
     }
 
     private onPOGUpdatedNotification: POGUpdatedNotification.HandlerSignature = (params) => {

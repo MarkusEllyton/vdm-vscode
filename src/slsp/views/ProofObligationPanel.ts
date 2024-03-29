@@ -16,6 +16,7 @@ import {
     DocumentSelector,
     debug,
     ProgressLocation,
+    Progress,
 } from "vscode";
 import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
@@ -41,7 +42,15 @@ export interface ProofObligationProvider {
     onDidChangeProofObligations: Event<boolean>;
     provideProofObligations(uri: Uri): Thenable<ProofObligation[]>;
     quickCheckProvider: boolean;
-    runQuickCheck(wsFolder: Uri, poIds: number[], token?: CancellationToken): Thenable<QuickCheckInfo[]>;
+    runQuickCheck(
+        wsFolder: Uri,
+        poIds: number[],
+        token?: CancellationToken,
+        progress?: Progress<{
+            message?: string;
+            increment?: number;
+        }>
+    ): Thenable<QuickCheckInfo[]>;
 }
 
 interface Message {
@@ -170,11 +179,19 @@ export class ProofObligationPanel implements Disposable {
         this._lastWsFolder = wsFolder;
     }
 
-    protected async onRunQuickCheck(uri: Uri, poIds: number[], token?: CancellationToken) {
+    protected async onRunQuickCheck(
+        uri: Uri,
+        poIds: number[],
+        token?: CancellationToken,
+        progress?: Progress<{
+            message?: string;
+            increment?: number;
+        }>
+    ) {
         const poProvider = this.getPOProvider(uri);
 
         try {
-            return await poProvider.provider.runQuickCheck(this._lastWsFolder.uri, poIds, token);
+            return await poProvider.provider.runQuickCheck(this._lastWsFolder.uri, poIds, token, progress);
         } catch (e) {
             window.showErrorMessage(e);
             console.warn(`[Proof Obligation View] QuickCheck provider failed.`);
@@ -313,7 +330,12 @@ export class ProofObligationPanel implements Disposable {
                                 },
                                 async (_progress, _token) => {
                                     try {
-                                        const qcInfos = await this.onRunQuickCheck(wsFolder.uri, message.data.poIds ?? [], _token);
+                                        const qcInfos = await this.onRunQuickCheck(
+                                            wsFolder.uri,
+                                            message.data.poIds ?? [],
+                                            _token,
+                                            _progress
+                                        );
                                         const posWithQc = this.addQuickCheckInfoToPos(this._pos, qcInfos);
 
                                         await this._panel.webview.postMessage({ command: "newPOs", pos: posWithQc });

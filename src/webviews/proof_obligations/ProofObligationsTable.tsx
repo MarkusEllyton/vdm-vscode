@@ -76,7 +76,6 @@ export const ProofObligationsTable = ({ headers, pos, onJumpToSource, openPos, o
     });
 
     const sortedPOs = sortPOs(pos, sortingState);
-    console.log(selectionState);
 
     return (
         <VSCodeDataGrid gridTemplateColumns="2fr 3fr 8fr 3fr" css={{ flexGrow: "1" }}>
