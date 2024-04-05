@@ -52,9 +52,9 @@ export const QuickCheckPanel = ({ proofObligation, vscodeApi, onClose }: QuickCh
     let launchCommand: string | null = null;
 
     if (proofObligation.counterexample) {
-        launchCommand = proofObligation.counterexample.launch.command;
+        launchCommand = proofObligation.counterexample.launch?.command ?? null;
     } else if (proofObligation.witness) {
-        launchCommand = proofObligation.witness.launch.command;
+        launchCommand = proofObligation.witness.launch?.command ?? null;
     }
 
     return (

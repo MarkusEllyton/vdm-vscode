@@ -52,7 +52,7 @@ export interface ProofObligationLaunchConfiguration extends VdmLaunchConfigurati
 export type CounterExampleVariables = Record<string, unknown>;
 
 export interface ProofObligationCounterExample {
-    launch: ProofObligationLaunchConfiguration;
+    launch?: ProofObligationLaunchConfiguration;
     variables: CounterExampleVariables;
 }
 
