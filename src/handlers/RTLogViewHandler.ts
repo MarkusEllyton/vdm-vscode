@@ -19,7 +19,7 @@ import AutoDisposable from "../helper/AutoDisposable";
 import * as Fs from "fs-extra";
 import * as Path from "path";
 import * as Util from "../util/Util";
-import { vdmDialects } from "../util/DialectUtil";
+import { VdmDialect } from "../util/DialectUtil";
 
 interface ConjectureTarget {
     kind: string;
@@ -78,7 +78,7 @@ export class RTLogViewHandler extends AutoDisposable {
         deployObj: "DeployObj",
     };
 
-    constructor(private readonly _context: ExtensionContext, readonly _knownVdmFolders: Map<WorkspaceFolder, vdmDialects>) {
+    constructor(private readonly _context: ExtensionContext, readonly _knownVdmFolders: Map<WorkspaceFolder, VdmDialect>) {
         super();
         // Enable the command
         commands.executeCommand("setContext", "vdm-vscode.OpenRTLog", true);
@@ -86,7 +86,7 @@ export class RTLogViewHandler extends AutoDisposable {
         Util.registerCommand(this._disposables, "vdm-vscode.OpenRTLog", async () => {
             const rtWorkSpaceFolders = new Map();
             for (const [key, value] of _knownVdmFolders) {
-                if (value == vdmDialects.VDMRT) {
+                if (value == VdmDialect.VDMRT) {
                     rtWorkSpaceFolders.set(key, value);
                 }
             }

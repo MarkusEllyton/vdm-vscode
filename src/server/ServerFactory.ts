@@ -135,11 +135,11 @@ export class ServerFactory implements Disposable {
         // Construct class path.
         let classPath: string = "";
         // Start by adding user defined library jar paths
-        AddLibraryHandler.getUserDefinedLibraryJars(wsFolder).forEach((libPath) => (classPath += libPath + path.delimiter));
+        AddLibraryHandler.getUserLibrarySources(wsFolder).forEach((libPath) => (classPath += libPath.jarPath + path.delimiter));
 
         // Add default library jars folder path
         if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-            const libPath: string = AddLibraryHandler.getIncludedLibrariesFolderPath(getExtensionPath(), wsFolder);
+            const libPath: string = AddLibraryHandler.getIncludedLibrariesFolderPath(wsFolder);
             if (libPath) {
                 classPath += path.resolve(libPath, "*") + path.delimiter;
             }

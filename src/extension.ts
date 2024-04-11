@@ -28,7 +28,7 @@ import { CoverageOverlay } from "./slsp/views/translate/CoverageOverlay";
 import { CombinatorialTestingView } from "./slsp/views/combinatorialTesting/CombinatorialTestingView";
 import { ClientManager } from "./ClientManager";
 import { ServerFactory } from "./server/ServerFactory";
-import { vdmFileExtensions, guessDialect, vdmDialects, vdmFilePattern } from "./util/DialectUtil";
+import { vdmFileExtensions, guessDialect, VdmDialect, vdmFilePattern } from "./util/DialectUtil";
 import { resetSortedWorkspaceFolders } from "./util/WorkspaceFoldersUtil";
 import { ServerLog } from "./server/ServerLog";
 import { OpenVDMToolsHandler } from "./handlers/OpenVDMToolsHandler";
@@ -54,14 +54,14 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(clientManager);
 
     // Keep track of VDM workspace folders
-    const knownVdmFolders: Map<WorkspaceFolder, vdmDialects> = new Map<WorkspaceFolder, vdmDialects>();
+    const knownVdmFolders: Map<WorkspaceFolder, VdmDialect> = new Map<WorkspaceFolder, VdmDialect>();
     if (workspace.workspaceFolders) {
         const workspaceFolders: WorkspaceFolder[] = new Array<WorkspaceFolder>(...workspace.workspaceFolders)
             .sort((a, b) => b.name.localeCompare(a.name))
             .reverse();
         for await (const wsFolder of workspaceFolders) {
             await guessDialect(wsFolder)
-                .then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
+                .then((dialect: VdmDialect) => knownVdmFolders.set(wsFolder, dialect))
                 .catch(() => {});
         }
     }
@@ -69,7 +69,7 @@ export async function activate(context: ExtensionContext) {
         workspace.onDidChangeWorkspaceFolders(async (e: WorkspaceFoldersChangeEvent) => {
             e.added.forEach((wsFolder) => {
                 guessDialect(wsFolder)
-                    .then((dialect: vdmDialects) => knownVdmFolders.set(wsFolder, dialect))
+                    .then((dialect: VdmDialect) => knownVdmFolders.set(wsFolder, dialect))
                     .catch(() => {});
             });
             e.removed.forEach((wsFolder) => {

@@ -8,7 +8,7 @@ import { CTTreeItem, TestGroupItem, TestItem, TraceItem } from "./CTTreeItems";
 import * as Types from "./CTDataTypes";
 import { CTFilterOption, NumberRange, VerdictKind } from "../../protocol/CombinatorialTesting";
 import { ClientManager } from "../../../ClientManager";
-import { vdmDialects } from "../../../util/DialectUtil";
+import { VdmDialect } from "../../../util/DialectUtil";
 
 enum state {
     idle,
@@ -56,7 +56,7 @@ export class CombinatorialTestingView implements Disposable {
 
     constructor(
         private _clientManager: ClientManager,
-        private _knownVdmFolders: Map<WorkspaceFolder, vdmDialects>,
+        private _knownVdmFolders: Map<WorkspaceFolder, VdmDialect>,
         private _filterHandler?: CTExecuteFilterHandler,
         private _interpreterHandler?: CTInterpreterHandler
     ) {

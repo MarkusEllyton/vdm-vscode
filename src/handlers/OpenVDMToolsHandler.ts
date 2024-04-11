@@ -6,10 +6,10 @@ import AutoDisposable from "../helper/AutoDisposable";
 import { ChildProcess, spawn } from "child_process";
 import * as Path from "path";
 import * as Fs from "fs-extra";
-import { dialectToPrettyFormat, vdmDialects, vdmFilePattern } from "../util/DialectUtil";
+import { dialectToPrettyFormat, VdmDialect, vdmFilePattern } from "../util/DialectUtil";
 
 export class OpenVDMToolsHandler extends AutoDisposable {
-    constructor(knownVdmFolders: Map<WorkspaceFolder, vdmDialects>) {
+    constructor(knownVdmFolders: Map<WorkspaceFolder, VdmDialect>) {
         super();
         commands.executeCommand("setContext", "vdm-vscode.OpenVDMTools", true);
         Util.registerCommand(this._disposables, "vdm-vscode.OpenVDMTools", async () => {
@@ -24,7 +24,7 @@ export class OpenVDMToolsHandler extends AutoDisposable {
                 workspace.workspaceFolders.length > 1
                     ? await window.showQuickPick(
                           Array.from(knownVdmFolders.entries())
-                              .filter((entry) => entry[1] == vdmDialects.VDMPP || entry[1] == vdmDialects.VDMSL)
+                              .filter((entry) => entry[1] == VdmDialect.VDMPP || entry[1] == VdmDialect.VDMSL)
                               .map((entry) => entry[0].name),
                           { canPickMany: false, title: "Select workspace folder" }
                       )
@@ -37,7 +37,7 @@ export class OpenVDMToolsHandler extends AutoDisposable {
             // Get the workspace folder and dialect
             const wsFolder: WorkspaceFolder =
                 typeof wsFS === "string" ? Array.from(knownVdmFolders.keys()).find((key) => key.name == wsFS) : wsFS;
-            const dialect: vdmDialects = knownVdmFolders.get(wsFolder);
+            const dialect: VdmDialect = knownVdmFolders.get(wsFolder);
 
             // Check if the user has defined the VDMTools path in settings
             let vdmToolsPath: string = workspace.getConfiguration("vdm-vscode.vdmtools.path", wsFolder).get(dialect);
@@ -65,9 +65,9 @@ export class OpenVDMToolsHandler extends AutoDisposable {
 
             // Handle path in MAC OS
             if (process.platform === "darwin") {
-                if (dialect == vdmDialects.VDMPP) {
+                if (dialect == VdmDialect.VDMPP) {
                     vdmToolsPath = Path.join(vdmToolsPath, "vppgde.app", "Contents", "MacOS", "vppgde");
-                } else if (dialect == vdmDialects.VDMSL) {
+                } else if (dialect == VdmDialect.VDMSL) {
                     vdmToolsPath = Path.join(vdmToolsPath, "vdmgde.app", "Contents", "MacOS", "vdmgde");
                 }
             } else if (Fs.statSync(vdmToolsPath).isDirectory()) {
@@ -128,14 +128,14 @@ class VDMToolsConfigurationHelper {
         return stringToReturn;
     }
 
-    public generateVDMToolsPrjFileContent(dialect: vdmDialects, vdmFilesInProject: string[]): string {
+    public generateVDMToolsPrjFileContent(dialect: VdmDialect, vdmFilesInProject: string[]): string {
         // Append start
         let projFileContent: string = `${this.CONTENT_START}${vdmFilesInProject.length + 3},`;
 
         // Append dialect
-        if (dialect == vdmDialects.VDMPP) {
+        if (dialect == VdmDialect.VDMPP) {
             projFileContent += this.CONTENT_DIALECT_PP_RT;
-        } else if (dialect == vdmDialects.VDMSL) {
+        } else if (dialect == VdmDialect.VDMSL) {
             projFileContent += this.CONTET_DIALECT_SL;
         }
 

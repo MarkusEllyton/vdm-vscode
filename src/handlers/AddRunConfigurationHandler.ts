@@ -3,7 +3,7 @@
 import * as util from "../util/Util";
 import { commands, ConfigurationTarget, debug, DebugConfiguration, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { VdmDebugConfiguration } from "../dap/VdmDapSupport";
-import { guessDialect, vdmDialects } from "../util/DialectUtil";
+import { guessDialect, VdmDialect } from "../util/DialectUtil";
 import AutoDisposable from "../helper/AutoDisposable";
 
 type VdmType = string;
@@ -58,9 +58,9 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         window.setStatusBarMessage(
             `Adding Run Configuration.`,
             new Promise(async (resolve, reject) => {
-                let dialect: vdmDialects;
+                let dialect: VdmDialect;
                 await guessDialect(wsFolder).then(
-                    (result: vdmDialects) => (dialect = result),
+                    (result: VdmDialect) => (dialect = result),
                     (error) => {
                         console.info(`[Run Config] Add configuration failed: ${error}`);
                         window.showInformationMessage(`Add run configration failed. Could not guess language`);
@@ -71,7 +71,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 // Prompt user for entry point class/module and function/operation
                 let selectedClass: string;
                 let selectedCommand: string;
-                if (dialect == vdmDialects.VDMSL) {
+                if (dialect == VdmDialect.VDMSL) {
                     selectedClass = await window.showInputBox({
                         prompt: "Input entry point Module",
                         placeHolder: "Module",
@@ -102,7 +102,7 @@ export class AddRunConfigurationHandler extends AutoDisposable {
                 let className = selectedClass.substring(0, selectedClass.indexOf("("));
                 let debugConfiguration: DebugConfiguration = this.buildDebugConfiguration(selectedCommand, className);
 
-                if (dialect == vdmDialects.VDMSL) debugConfiguration.command = `print ${selectedCommand}`;
+                if (dialect == VdmDialect.VDMSL) debugConfiguration.command = `print ${selectedCommand}`;
                 else debugConfiguration.command = `print new ${selectedClass}.${selectedCommand}`;
 
                 // Save run configuration

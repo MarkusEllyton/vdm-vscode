@@ -7,7 +7,7 @@ import * as path from "path";
 import { extensionId } from "../ExtensionInfo";
 import { ClientManager } from "../ClientManager";
 import { createDirectory, recursivePathSearch } from "../util/DirectoriesUtil";
-import { getDialectFromAlias, guessDialect, pickDialect, vdmDialects } from "../util/DialectUtil";
+import { getDialectFromAlias, guessDialect, pickDialect, VdmDialect } from "../util/DialectUtil";
 import AutoDisposable from "../helper/AutoDisposable";
 
 export class JavaCodeGenHandler extends AutoDisposable {
@@ -32,7 +32,7 @@ export class JavaCodeGenHandler extends AutoDisposable {
     }
 
     private async javaCodeGen(wsFolder: WorkspaceFolder) {
-        let dialect: vdmDialects;
+        let dialect: VdmDialect;
         const javaCodeGendialects = { vdmsl: "sl", vdmpp: "pp", vdmrt: "rt" };
         window.setStatusBarMessage(
             `Starting code generation.`,
@@ -45,10 +45,10 @@ export class JavaCodeGenHandler extends AutoDisposable {
 
                     // Guess dialect
                     await guessDialect(wsFolder)
-                        .then((dia: vdmDialects) => (dialect = dia))
+                        .then((dia: VdmDialect) => (dialect = dia))
                         .catch(async () => {
                             await pickDialect()
-                                .then((dia: vdmDialects) => (dialect = dia))
+                                .then((dia: VdmDialect) => (dialect = dia))
                                 .catch(() => {});
                         });
                 }

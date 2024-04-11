@@ -4,14 +4,14 @@ import { commands, Disposable, extensions, TextDocument, Uri, ViewColumn, window
 import AutoDisposable from "../helper/AutoDisposable";
 import * as Util from "../util/Util";
 import * as Fs from "fs-extra";
-import { vdmDialects } from "../util/DialectUtil";
+import { VdmDialect } from "../util/DialectUtil";
 import * as Path from "path";
 import { extensionId } from "../ExtensionInfo";
 
 export class ChangeVdmjPropertiesHandler extends AutoDisposable {
     private readonly _fileName: string = "vdmj.properties";
     private _isWatchingChanges: boolean = false;
-    constructor(readonly knownVdmFolders: Map<WorkspaceFolder, vdmDialects>) {
+    constructor(readonly knownVdmFolders: Map<WorkspaceFolder, VdmDialect>) {
         super();
         commands.executeCommand("setContext", "vdm-vscode.changeVdmjProperties", true);
 
