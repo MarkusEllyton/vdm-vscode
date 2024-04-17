@@ -220,7 +220,17 @@
             },
             {
                 "command": "vdm-vscode.addLibraryJars",
-                "title": "Add library jar",
+                "title": "Add library jars",
+                "category": "VDM"
+            },
+            {
+                "command": "vdm-vscode.addPluginJarFolders",
+                "title": "Add folder(s) containing plugin jars",
+                "category": "VDM"
+            },
+            {
+                "command": "vdm-vscode.addPluginJars",
+                "title": "Add plugin jars",
                 "category": "VDM"
             },
             {
@@ -236,6 +246,12 @@
                 "category": "VDM",
                 "icon": "$(library)",
                 "enablement": "vdm-vscode.addLibrary"
+            },
+            {
+                "command": "vdm-vscode.managePlugins",
+                "title": "Manage VDMJ Plugins",
+                "category": "VDM",
+                "enablement": "vdm-vscode.managePlugins"
             },
             {
                 "command": "vdm-vscode.javaCodeGen",
@@ -529,6 +545,10 @@
                     "group": "workspace@1"
                 },
                 {
+                    "command": "vdm-vscode.managePlugins",
+                    "group": "workspace@1"
+                },
+                {
                     "command": "vdm-vscode.addRunConfiguration",
                     "group": "workspace@2"
                 },
@@ -769,6 +789,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "vdm-vscode.managePlugins",
+                    "when": "false"
+                },
+                {
                     "command": "vdm-vscode.addRunConfiguration",
                     "when": "false"
                 },
@@ -827,39 +851,22 @@
                         "scope": "resource",
                         "description": "Activate the VDMJ -strict flag that highlights (with warnings) where a specification is taking advantage of lenient parsing rule."
                     },
-                    "vdm-vscode.server.plugins": {
+                    "vdm-vscode.server.plugins.searchPaths": {
                         "type": "array",
                         "items": {
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "type": "string",
-                                    "description": "Name of the plugin"
-                                },
-                                "classname": {
-                                    "type": "string",
-                                    "description": "Fully qualified name of the main class"
-                                },
-                                "jar": {
-                                    "type": "string",
-                                    "description": "Path to the jar file containing the plugin"
-                                },
-                                "dialects": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string",
-                                        "enum": [
-                                            "vdmsl",
-                                            "vdmpp",
-                                            "vdmrt"
-                                        ]
-                                    },
-                                    "description": "Optional: Dialects that the plugin supports. If not included, it is assumed that the plugin is available for all VDM dialects"
-                                }
-                            }
+                            "type": "string"
                         },
                         "scope": "resource",
-                        "description": "Plugins for the VDMJ language server."
+                        "description": "Specifies additional paths to search for plugins. The paths can either point directly to a plugin jar or a directory containing multiple plugin jars. [Add a directory to the search path](command:vdm-vscode.addPluginJarFolders), [Add a jar to the search path](command:vdm-vscode.addLibraryJars), or type in a path manually."
+                    },
+                    "vdm-vscode.server.plugins.enabled": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "description": "Enable plugin with given name",
+                            "type": "boolean"
+                        },
+                        "scope": "resource",
+                        "description": "Plugins to enable/disable. If a plugin is enabled in the User settings but explicitly disabled in the Workspace or Workspace Folder settings, the Workspace settings take precedence. This settings only affects plugins found in the search paths. Use [Manage all plugins](command:vdm-vscode.addLibraryJarFolders) to adjust settings."
                     }
                 }
             },
@@ -1586,7 +1593,6 @@
         "@types/react-router-dom": "^5.3.3",
         "@types/sinon": "^10.0.11",
         "@types/vscode": "^1.64.0",
-        "@types/yauzl": "^2.10.3",
         "@typescript-eslint/eslint-plugin": "^5.16.0",
         "@typescript-eslint/parser": "^5.16.0",
         "@vscode/test-electron": "^2.1.3",
@@ -1614,11 +1620,11 @@
         "fs-extra": "^10.0.0",
         "iconv-lite": "^0.6.3",
         "jschardet": "^3.0.0",
+        "jszip": "^3.10.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-router-dom": "^6.22.1",
         "run": "^1.4.0",
-        "vscode-languageclient": "^7.0.0",
-        "yauzl": "^2.10.0"
+        "vscode-languageclient": "^7.0.0"
     }
 }

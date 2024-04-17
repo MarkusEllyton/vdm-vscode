@@ -7,13 +7,14 @@ import * as path from "path";
 import * as child_process from "child_process";
 import * as util from "../util/Util";
 import * as encoding from "../Encoding";
-import * as Plugins from "./Plugins";
 import { AddLibraryHandler } from "../handlers/AddLibraryHandler";
 import { WorkspaceConfiguration, workspace, window, WorkspaceFolder, OutputChannel, Disposable } from "vscode";
 import { ServerOptions } from "vscode-languageclient/node";
 import { getExtensionPath } from "../util/ExtensionUtil";
 import { ServerLog } from "./ServerLog";
 import { ensureDirectoryExistence, recursivePathSearch } from "../util/DirectoriesUtil";
+import { ManagePluginsHandler } from "../handlers/ManagePluginsHandler";
+import { VdmDialect } from "../util/DialectUtil";
 
 export class ServerFactory implements Disposable {
     private _jarPath: string;
@@ -47,7 +48,7 @@ export class ServerFactory implements Disposable {
         this._log.dispose();
     }
 
-    createServerOptions(wsFolder: WorkspaceFolder, dialect: string): ServerOptions {
+    createServerOptions(wsFolder: WorkspaceFolder, dialect: VdmDialect): ServerOptions {
         // Setup server options
         const serverOptions: ServerOptions = () => {
             return new Promise((resolve, reject) => {
@@ -66,10 +67,10 @@ export class ServerFactory implements Disposable {
                     });
 
                     // Select a random port
-                    server.listen(0, "localhost", null, () => {
+                    server.listen(0, "localhost", null, async () => {
                         let address = server.address();
                         if (address && typeof address != "string") {
-                            this.launchServer(wsFolder, dialect, address.port);
+                            await this.launchServer(wsFolder, dialect, address.port);
                         } else {
                             reject("Could not get port");
                         }
@@ -84,7 +85,7 @@ export class ServerFactory implements Disposable {
         return workspace.getConfiguration("vdm-vscode.server", wsFolder);
     }
 
-    private launchServer(wsFolder: WorkspaceFolder, dialect: string, lspPort: number) {
+    private async launchServer(wsFolder: WorkspaceFolder, dialect: VdmDialect, lspPort: number) {
         // Get server configurations
         const serverConfig: WorkspaceConfiguration = this.getServerConfig(wsFolder);
         const stdioConfig: WorkspaceConfiguration = serverConfig.get("stdio");
@@ -103,12 +104,6 @@ export class ServerFactory implements Disposable {
                 i++;
             }
             args.push(...split);
-        }
-
-        // Add Plugin related JVM args
-        const pluginArgs = Plugins.getJvmAdditions(wsFolder, dialect);
-        if (pluginArgs) {
-            args.push(pluginArgs);
         }
 
         // Activate server log
@@ -138,15 +133,19 @@ export class ServerFactory implements Disposable {
         AddLibraryHandler.getUserLibrarySources(wsFolder).forEach((libPath) => (classPath += libPath.jarPath + path.delimiter));
 
         // Add default library jars folder path
-        if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-            const libPath: string = AddLibraryHandler.getIncludedLibrariesFolderPath(wsFolder);
-            if (libPath) {
-                classPath += path.resolve(libPath, "*") + path.delimiter;
-            }
+        const libPath: string = AddLibraryHandler.getIncludedLibrariesFolderPath(wsFolder);
+        if (libPath) {
+            classPath += path.resolve(libPath, "*") + path.delimiter;
         }
 
         // Add plugin jars
-        Plugins.getClasspathAdditions(wsFolder, dialect).forEach((cp) => (classPath += cp + path.delimiter));
+        const classPathAdditions = await ManagePluginsHandler.getClasspathAdditions(
+            wsFolder,
+            dialect,
+            serverConfig.get("highPrecision", false) ? "hp" : "standard"
+        );
+
+        classPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
 
         // Add user defined paths
         (serverConfig.classPathAdditions as string[]).forEach((cp) => {
@@ -199,7 +198,9 @@ export class ServerFactory implements Disposable {
             // Log to terminal
             else {
                 let outputChannel: OutputChannel = window.createOutputChannel("VDM: " + wsFolder.name.toString());
+                console.log("Creating output channel for server.");
                 server.stdout.addListener("data", (chunk) => {
+                    console.log("Output received!", chunk);
                     outputChannel.show(true);
                     outputChannel.appendLine(chunk);
                 });

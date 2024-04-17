@@ -5,11 +5,8 @@ import * as Path from "path";
 import { commands, QuickPickItem, QuickPickItemKind, Uri, window, workspace, WorkspaceFolder } from "vscode";
 import { ClientManager } from "../ClientManager";
 import AutoDisposable from "../helper/AutoDisposable";
-import { SpecificationLanguageClient } from "../slsp/SpecificationLanguageClient";
-import { getDialectFromAlias, guessDialect, pickDialect, VdmDialect } from "../util/DialectUtil";
+import { getDialect, VdmDialect } from "../util/DialectUtil";
 import * as Util from "../util/Util";
-
-// Zip library
 
 // Encoding library
 import * as iconv from "iconv-lite";
@@ -79,7 +76,7 @@ export class AddLibraryHandler extends AutoDisposable {
 
     private async handleAddLibrary(wsFolder: WorkspaceFolder): Promise<void> {
         try {
-            const dialect = await this.getDialect(wsFolder);
+            const dialect = await getDialect(wsFolder, this.clientManager);
             const discoveredLibraries = await this.getAllLibInfo(dialect, wsFolder);
 
             if (discoveredLibraries.size === 0) {
@@ -109,7 +106,7 @@ export class AddLibraryHandler extends AutoDisposable {
         }
     }
 
-    private async promptUserToSelectLibraries(libSourceMap: LibrarySourceMap): Promise<SourcedLibraryMetadata[]> {
+    private async promptUserToSelectLibraries(libSourceMap: LibrarySourceMap): Promise<SourcedLibraryMetadata[] | undefined> {
         const defaultLibraryItems: QuickPickLibraryItem[] = [];
         const userLibraryItems: QuickPickLibraryItem[] = [];
 
@@ -147,6 +144,10 @@ export class AddLibraryHandler extends AutoDisposable {
                 canPickMany: true,
             }
         );
+
+        if (selectedLibraries === undefined) {
+            return undefined;
+        }
 
         return selectedLibraries.map((lib) => lib.metadata);
     }
@@ -204,30 +205,6 @@ export class AddLibraryHandler extends AutoDisposable {
         }
     }
 
-    private async getDialect(wsFolder: WorkspaceFolder): Promise<VdmDialect> {
-        const client: SpecificationLanguageClient = this.clientManager.get(wsFolder);
-
-        if (client) {
-            return getDialectFromAlias(client.languageId);
-        }
-
-        let dialect: VdmDialect;
-        try {
-            // Try to guess the dialect
-            dialect = await guessDialect(wsFolder);
-        } catch {
-            // If that fails ask the user for it
-            dialect = await pickDialect();
-        }
-
-        // If the dialect could not be guessed or the user failed to pick one, there's nothing we can do.
-        if (!dialect) {
-            throw Error("Add library failed! Unable to determine VDM dialect for workspace");
-        }
-
-        return dialect;
-    }
-
     // Library resolution
     public static getIncludedLibrariesFolderPath(wsFolder: WorkspaceFolder): string {
         // Get the standard or high precision path of the included library jars folder
@@ -255,35 +232,32 @@ export class AddLibraryHandler extends AutoDisposable {
     ): string[] {
         // Resolve jar paths, flatten directories, filter duplicate jar names and inform the user
         const visitedJarPaths: Map<string, string> = new Map<string, string>();
-        return (
-            jarPaths
-                .map((path: string) => {
-                    const originalPath: string = path;
-                    if (rootUri && !Path.isAbsolute(path)) {
-                        // Path should be relative to the project
-                        const resolvedPath: string = Path.resolve(...[rootUri.fsPath, path]);
-                        path = resolvedPath;
-                    }
-                    if (!Fs.existsSync(path)) {
-                        resolveFailedPaths.push(originalPath);
-                        return [];
-                    }
-                    return Fs.lstatSync(path).isDirectory() ? getFilesFromDirRecur(path, "jar") : [path];
-                })
-                ?.reduce((prev: string[], cur: string[]) => prev.concat(cur), []) ?? []
-        ).filter((jarPath: string) => {
-            const jarName: string = Path.basename(jarPath);
-            if (!visitedJarPaths.has(jarName)) {
-                visitedJarPaths.set(jarName, jarPath);
-                return true;
-            }
-            window.showInformationMessage(
-                `The library jar '${jarName}' is in multiple paths for the setting level ${settingsLevel}. Using the path '${visitedJarPaths.get(
-                    jarName
-                )}'.`
-            );
-            return false;
-        });
+        return jarPaths
+            .flatMap((originalPath: string) => {
+                let resolvedPath: string = originalPath;
+                if (rootUri && !Path.isAbsolute(originalPath)) {
+                    // Path should be relative to the project
+                    resolvedPath = Path.resolve(...[rootUri.fsPath, originalPath]);
+                }
+                if (!Fs.existsSync(resolvedPath)) {
+                    resolveFailedPaths.push(originalPath);
+                    return [];
+                }
+                return Fs.lstatSync(resolvedPath).isDirectory() ? getFilesFromDirRecur(resolvedPath, "jar") : [resolvedPath];
+            })
+            .filter((jarPath: string) => {
+                const jarName: string = Path.basename(jarPath);
+                if (!visitedJarPaths.has(jarName)) {
+                    visitedJarPaths.set(jarName, jarPath);
+                    return true;
+                }
+                window.showInformationMessage(
+                    `The library jar '${jarName}' is in multiple paths for the setting level ${settingsLevel}. Using the path '${visitedJarPaths.get(
+                        jarName
+                    )}'.`
+                );
+                return false;
+            });
     }
 
     public static getUserLibrarySources(wsFolder: WorkspaceFolder): LibrarySource[] {
@@ -304,7 +278,7 @@ export class AddLibraryHandler extends AutoDisposable {
 
         // Determine if settings are equal, e.g. if the setting is not defined at the folder level.
         if (
-            folderSettings.length != userOrWorkspaceSettings.length ||
+            folderSettings.length !== userOrWorkspaceSettings.length ||
             !folderSettings.every((ujp: string) => userOrWorkspaceSettings.find((fjp: string) => fjp === ujp))
         ) {
             // If the settings are not equal then merge them and in case of duplicate jar names the folder level takes precedence over the workspace/user level.
@@ -313,7 +287,7 @@ export class AddLibraryHandler extends AutoDisposable {
                     (uwsPath: string) => {
                         const uwsPathName: string = Path.basename(uwsPath);
                         const existingJarPath: string = jarPathsFromSettings.find(
-                            (fsPath: string) => Path.basename(fsPath) == Path.basename(uwsPath)
+                            (fsPath: string) => Path.basename(fsPath) === Path.basename(uwsPath)
                         );
                         if (existingJarPath) {
                             window.showInformationMessage(
@@ -370,8 +344,6 @@ export class AddLibraryHandler extends AutoDisposable {
         const jarFile = await JarFile.open(source.jarPath);
         const jsonData = JSON.parse((await jarFile.readFile("META-INF/library.json")).toString());
         const libraries: LibraryMetadata[] = jsonData[dialect] ?? [];
-
-        jarFile.close();
 
         return libraries.map((lib) => ({
             ...lib,

@@ -4,6 +4,9 @@ import * as Path from "path";
 import * as Fs from "fs-extra";
 import { commands, Disposable, DocumentFilter, DocumentSelector, window, workspace, WorkspaceFolder, Uri } from "vscode";
 import * as glob from "glob";
+import { ClientManager } from "../ClientManager";
+
+export type VDMJPrecision = "standard" | "hp";
 
 export function writeToLog(path: string, msg: string) {
     let logStream = Fs.createWriteStream(path, { flags: "a" });
@@ -162,4 +165,8 @@ export function match(documentSelector: DocumentSelector, uri: Uri) {
     }
 
     return match;
+}
+
+export function getPrecisionOfWorkspace(wsFolder: WorkspaceFolder, clientManager: ClientManager): VDMJPrecision {
+    return clientManager.isHighPrecisionClient(clientManager.get(wsFolder)) ? "hp" : "standard";
 }

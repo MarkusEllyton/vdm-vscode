@@ -10,6 +10,7 @@ import { VdmDapSupport as dapSupport } from "./dap/VdmDapSupport";
 import AutoDisposable from "./helper/AutoDisposable";
 import { getOuterMostWorkspaceFolder } from "./util/WorkspaceFoldersUtil";
 import * as encoding from "./Encoding";
+import { getDialectFromAlias, VdmDialect } from "./util/DialectUtil";
 
 export class ClientManager extends AutoDisposable {
     private _clients: Map<string, SpecificationLanguageClient> = new Map();
@@ -59,7 +60,7 @@ export class ClientManager extends AutoDisposable {
         let client = this.get(wsFolder);
         if (client) {
             this.delete(wsFolder);
-            client.stop().then(() => this.startClient(wsFolder, client.languageId));
+            client.stop().then(() => this.startClient(wsFolder, getDialectFromAlias(client.languageId)));
         }
     }
 
@@ -134,7 +135,8 @@ export class ClientManager extends AutoDisposable {
         }
         // If we have nested workspace folders we only start a server on the outer most workspace folder.
         const wsFolder = getOuterMostWorkspaceFolder(folder);
-        this.startClient(wsFolder, document.languageId);
+        console.log("Launching client", document.languageId);
+        this.startClient(wsFolder, getDialectFromAlias(document.languageId));
     }
 
     private addClient(wsFolder: WorkspaceFolder, client: SpecificationLanguageClient): void {
@@ -145,7 +147,7 @@ export class ClientManager extends AutoDisposable {
         this._clients.set(ClientManager.getKey(wsFolder), client);
     }
 
-    private startClient(wsFolder: WorkspaceFolder, dialect: string) {
+    private startClient(wsFolder: WorkspaceFolder, dialect: VdmDialect) {
         // Abort if client already exists
         if (this.has(wsFolder)) {
             return;
@@ -212,7 +214,7 @@ export class ClientManager extends AutoDisposable {
                 });
 
                 this.delete(wsFolder);
-                this.startClient(wsFolder, client.languageId);
+                this.startClient(wsFolder, getDialectFromAlias(client.languageId));
             }
         }
     }

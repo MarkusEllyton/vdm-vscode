@@ -32,14 +32,6 @@ export function getPlugins(wsFolder: WorkspaceFolder, dialect: string): PluginSe
     return pluginsFiltered;
 }
 
-// Get the jvm arguments for the available plugins
-export function getJvmAdditions(wsFolder: WorkspaceFolder, dialect: string): string {
-    const plugins = getPlugins(wsFolder, dialect);
-
-    if (plugins.length > 0) return `-Dlspx.plugins=${plugins.map((p) => p.classname).join(";")}`;
-    else return undefined;
-}
-
 // Get the classpath additions for the available plugins
 export function getClasspathAdditions(wsFolder: WorkspaceFolder, dialect: string): string[] {
     const plugins = getPlugins(wsFolder, dialect);
