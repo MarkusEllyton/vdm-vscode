@@ -1,3 +1,8 @@
+### 1.4.0-beta.7
+- Update VDMJ plugin jars - add plugin.json metadata to QuickCheck plugin
+- Add plugin management UI.
+- Improve library addition functionality to also show user-defined libraries.
+
 ### 1.4.0-beta.6
 - Update VDMJ jars.
 - Fix bug that would cause POG view to blank on QuickCheck results without launch command.
