@@ -10,17 +10,9 @@ import * as Util from "../util/Util";
 
 // Encoding library
 import * as iconv from "iconv-lite";
-import { getFilesFromDirRecur } from "../util/DirectoriesUtil";
-import { getExtensionPath } from "../util/ExtensionUtil";
 import { JarFile } from "../util/JarFile";
 import { Readable } from "stream";
-
-type LibraryType = "builtin" | "user";
-
-interface LibrarySource {
-    type: LibraryType;
-    jarPath: string;
-}
+import { LibrarySource, VDMJExtensionsHandler } from "./VDMJExtensionsHandler";
 
 interface LibraryMetadata {
     name: string;
@@ -54,12 +46,6 @@ export class AddLibraryHandler extends AutoDisposable {
         commands.executeCommand("setContext", "vdm-vscode.addLibrary", true);
         Util.registerCommand(this._disposables, "vdm-vscode.addLibrary", (inputUri: Uri) =>
             this.addLibrary(workspace.getWorkspaceFolder(inputUri))
-        );
-        Util.registerCommand(this._disposables, "vdm-vscode.addLibraryJarFolders", () =>
-            Util.addToSettingsArray(true, "VDM libraries", "vdm-vscode.server.libraries", "VDM-Libraries")
-        );
-        Util.registerCommand(this._disposables, "vdm-vscode.addLibraryJars", () =>
-            Util.addToSettingsArray(false, "VDM libraries", "vdm-vscode.server.libraries", "VDM-Libraries")
         );
     }
 
@@ -206,140 +192,6 @@ export class AddLibraryHandler extends AutoDisposable {
     }
 
     // Library resolution
-    public static getIncludedLibrariesFolderPath(wsFolder: WorkspaceFolder): string {
-        // Get the standard or high precision path of the included library jars folder
-        const libPath: string = Path.resolve(
-            getExtensionPath(),
-            "resources",
-            "jars",
-            workspace.getConfiguration("vdm-vscode.server", wsFolder)?.highPrecision ? "vdmj_hp" : "vdmj" ?? "vdmj",
-            "libs"
-        );
-
-        if (!Fs.existsSync(libPath)) {
-            console.log("Invalid path for default libraries: " + libPath);
-            return "";
-        }
-
-        return libPath;
-    }
-
-    private static resolveJarPathsFromSettings(
-        jarPaths: string[],
-        resolveFailedPaths: string[],
-        settingsLevel: string,
-        rootUri?: Uri
-    ): string[] {
-        // Resolve jar paths, flatten directories, filter duplicate jar names and inform the user
-        const visitedJarPaths: Map<string, string> = new Map<string, string>();
-        return jarPaths
-            .flatMap((originalPath: string) => {
-                let resolvedPath: string = originalPath;
-                if (rootUri && !Path.isAbsolute(originalPath)) {
-                    // Path should be relative to the project
-                    resolvedPath = Path.resolve(...[rootUri.fsPath, originalPath]);
-                }
-                if (!Fs.existsSync(resolvedPath)) {
-                    resolveFailedPaths.push(originalPath);
-                    return [];
-                }
-                return Fs.lstatSync(resolvedPath).isDirectory() ? getFilesFromDirRecur(resolvedPath, "jar") : [resolvedPath];
-            })
-            .filter((jarPath: string) => {
-                const jarName: string = Path.basename(jarPath);
-                if (!visitedJarPaths.has(jarName)) {
-                    visitedJarPaths.set(jarName, jarPath);
-                    return true;
-                }
-                window.showInformationMessage(
-                    `The library jar '${jarName}' is in multiple paths for the setting level ${settingsLevel}. Using the path '${visitedJarPaths.get(
-                        jarName
-                    )}'.`
-                );
-                return false;
-            });
-    }
-
-    public static getUserLibrarySources(wsFolder: WorkspaceFolder): LibrarySource[] {
-        // Get library jars specified by the user at the folder level setting - if not defined at this level then the "next up" level where it is defined is returned.
-        let folderSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder.uri)?.get("VDM-Libraries") ??
-            []) as string[];
-
-        // Get library jars specified by the user at the user or workspace level setting - if the workspace level setting is defined then it is returned instead of the user level setting.
-        let userOrWorkspaceSettings: string[] = (workspace.getConfiguration("vdm-vscode.server.libraries")?.get("VDM-Libraries") ??
-            []) as string[];
-        const resolveFailedPaths: string[] = [];
-        const jarPathsFromSettings: string[] = AddLibraryHandler.resolveJarPathsFromSettings(
-            folderSettings,
-            resolveFailedPaths,
-            "Folder",
-            wsFolder.uri
-        );
-
-        // Determine if settings are equal, e.g. if the setting is not defined at the folder level.
-        if (
-            folderSettings.length !== userOrWorkspaceSettings.length ||
-            !folderSettings.every((ujp: string) => userOrWorkspaceSettings.find((fjp: string) => fjp === ujp))
-        ) {
-            // If the settings are not equal then merge them and in case of duplicate jar names the folder level takes precedence over the workspace/user level.
-            jarPathsFromSettings.push(
-                ...AddLibraryHandler.resolveJarPathsFromSettings(userOrWorkspaceSettings, resolveFailedPaths, "User or Workspace").filter(
-                    (uwsPath: string) => {
-                        const uwsPathName: string = Path.basename(uwsPath);
-                        const existingJarPath: string = jarPathsFromSettings.find(
-                            (fsPath: string) => Path.basename(fsPath) === Path.basename(uwsPath)
-                        );
-                        if (existingJarPath) {
-                            window.showInformationMessage(
-                                `The library jar ${uwsPathName} has been defined on multiple setting levels. The path '${existingJarPath}' from the 'folder' level is being used.`
-                            );
-                            return false;
-                        }
-                        return true;
-                    }
-                )
-            );
-        }
-
-        if (resolveFailedPaths.length > 0) {
-            const msg: string = `Unable to resolve the following VDM library jar/folder paths: <${resolveFailedPaths.reduce(
-                (prev, curr) => (curr += `> <${prev}`)
-            )}>. These can be changed in the settings.`;
-            console.log(msg);
-            window
-                .showInformationMessage(msg, ...["Go to settings"])
-                .then(() => commands.executeCommand("workbench.action.openSettings", "vdm-vscode.server.libraries"));
-        }
-
-        return jarPathsFromSettings.map((jarPath) => ({
-            type: "user",
-            jarPath,
-        }));
-    }
-
-    public static getDefaultLibrarySources(wsFolder: WorkspaceFolder, userDefinedLibrarySources: LibrarySource[]): LibrarySource[] {
-        let includedJarsPaths: string[] = getFilesFromDirRecur(this.getIncludedLibrariesFolderPath(wsFolder), "jar");
-
-        if (userDefinedLibrarySources.length > 0) {
-            includedJarsPaths = includedJarsPaths.filter((ijp: string) => {
-                const jarName: string = Path.basename(ijp);
-                const existingLibrarySource = userDefinedLibrarySources.find((userLib) => Path.basename(userLib.jarPath) === jarName);
-                if (existingLibrarySource) {
-                    window.showInformationMessage(
-                        `The included library jar '${jarName}' is also defined by the user in the path '${existingLibrarySource.jarPath}'. Ignoring the version included with the extension.`
-                    );
-                    return false;
-                }
-                return true;
-            });
-        }
-
-        return includedJarsPaths.map((jarPath) => ({
-            type: "builtin",
-            jarPath,
-        }));
-    }
-
     private async getLibInfoFromSource(source: LibrarySource, dialect: VdmDialect): Promise<SourcedLibraryMetadata[]> {
         const jarFile = await JarFile.open(source.jarPath);
         const jsonData = JSON.parse((await jarFile.readFile("META-INF/library.json")).toString());
@@ -369,12 +221,7 @@ export class AddLibraryHandler extends AutoDisposable {
     }
 
     private async getAllLibInfo(dialect: VdmDialect, wsFolder: WorkspaceFolder): Promise<LibrarySourceMap> {
-        const libraries: LibrarySource[] = AddLibraryHandler.getUserLibrarySources(wsFolder);
-
-        if (workspace.getConfiguration("vdm-vscode.server.libraries", wsFolder).includeDefaultLibraries) {
-            const defaultLibraries = AddLibraryHandler.getDefaultLibrarySources(wsFolder, libraries);
-            libraries.push(...defaultLibraries);
-        }
+        const libraries: LibrarySource[] = VDMJExtensionsHandler.getAllLibrarySources(wsFolder);
 
         if (libraries.length === 0) {
             return new Map();

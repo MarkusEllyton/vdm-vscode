@@ -1,3 +1,9 @@
+### 1.4.0-beta.8
+- Update VDMJ plugin jars - add plugin.json metadata to UML plugin/
+- Add/update VDMJ HP jars and QuickCheck plugin.
+- Add annotation management UI.
+- Clean up handling of VDMJ extensions, i.e. libraries, plugins, annotations. They all share common search path now.
+
 ### 1.4.0-beta.7
 - Update VDMJ plugin jars - add plugin.json metadata to QuickCheck plugin
 - Add plugin management UI.

@@ -7,7 +7,6 @@ import * as path from "path";
 import * as child_process from "child_process";
 import * as util from "../util/Util";
 import * as encoding from "../Encoding";
-import { AddLibraryHandler } from "../handlers/AddLibraryHandler";
 import { WorkspaceConfiguration, workspace, window, WorkspaceFolder, OutputChannel, Disposable } from "vscode";
 import { ServerOptions } from "vscode-languageclient/node";
 import { getExtensionPath } from "../util/ExtensionUtil";
@@ -15,6 +14,8 @@ import { ServerLog } from "./ServerLog";
 import { ensureDirectoryExistence, recursivePathSearch } from "../util/DirectoriesUtil";
 import { ManagePluginsHandler } from "../handlers/ManagePluginsHandler";
 import { VdmDialect } from "../util/DialectUtil";
+import { VDMJExtensionsHandler } from "../handlers/VDMJExtensionsHandler";
+import { ManageAnnotationsHandler } from "../handlers/ManageAnnotationsHandler";
 
 export class ServerFactory implements Disposable {
     private _jarPath: string;
@@ -130,22 +131,25 @@ export class ServerFactory implements Disposable {
         // Construct class path.
         let classPath: string = "";
         // Start by adding user defined library jar paths
-        AddLibraryHandler.getUserLibrarySources(wsFolder).forEach((libPath) => (classPath += libPath.jarPath + path.delimiter));
-
-        // Add default library jars folder path
-        const libPath: string = AddLibraryHandler.getIncludedLibrariesFolderPath(wsFolder);
-        if (libPath) {
-            classPath += path.resolve(libPath, "*") + path.delimiter;
-        }
+        VDMJExtensionsHandler.getAllLibrarySources(wsFolder).forEach((libPath) => (classPath += libPath.jarPath + path.delimiter));
 
         // Add plugin jars
-        const classPathAdditions = await ManagePluginsHandler.getClasspathAdditions(
+        const pluginClassPathAdditions = await ManagePluginsHandler.getClasspathAdditions(
             wsFolder,
             dialect,
             serverConfig.get("highPrecision", false) ? "hp" : "standard"
         );
 
-        classPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
+        pluginClassPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
+
+        // Add annotation jars
+        const annotationClassPathAdditions = await ManageAnnotationsHandler.getClasspathAdditions(
+            wsFolder,
+            dialect,
+            serverConfig.get("highPrecision", false) ? "hp" : "standard"
+        );
+
+        annotationClassPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
 
         // Add user defined paths
         (serverConfig.classPathAdditions as string[]).forEach((cp) => {

@@ -37,6 +37,8 @@ import * as Util from "./util/Util";
 import { RTLogViewHandler } from "./handlers/RTLogViewHandler";
 import { FMUHandler } from "./handlers/FMUHandler";
 import { ManagePluginsHandler } from "./handlers/ManagePluginsHandler";
+import { ManageAnnotationsHandler } from "./handlers/ManageAnnotationsHandler";
+import { VDMJExtensionsHandler } from "./handlers/VDMJExtensionsHandler";
 
 let clientManager: ClientManager;
 
@@ -103,7 +105,9 @@ export async function activate(context: ExtensionContext) {
 
     // Initialise handlers
     context.subscriptions.push(new AddLibraryHandler(clientManager));
+    context.subscriptions.push(new VDMJExtensionsHandler());
     context.subscriptions.push(new ManagePluginsHandler(clientManager));
+    context.subscriptions.push(new ManageAnnotationsHandler(clientManager));
     context.subscriptions.push(new AddRunConfigurationHandler());
     context.subscriptions.push(new AddExampleHandler());
     context.subscriptions.push(new JavaCodeGenHandler(clientManager));

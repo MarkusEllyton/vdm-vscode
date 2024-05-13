@@ -1,6 +1,6 @@
 {
     "name": "vdm-vscode",
-    "version": "1.4.0-beta.7",
+    "version": "1.4.0-beta.8",
     "publisher": "overturetool",
     "engines": {
         "vscode": "^1.64.0",
@@ -214,23 +214,13 @@
                 "category": "VDM"
             },
             {
-                "command": "vdm-vscode.addLibraryJarFolders",
-                "title": "Add folder(s) containing library jars",
+                "command": "vdm-vscode.addExtensionJarFolders",
+                "title": "Add folder(s) containing VDMJ extension jars",
                 "category": "VDM"
             },
             {
-                "command": "vdm-vscode.addLibraryJars",
-                "title": "Add library jars",
-                "category": "VDM"
-            },
-            {
-                "command": "vdm-vscode.addPluginJarFolders",
-                "title": "Add folder(s) containing plugin jars",
-                "category": "VDM"
-            },
-            {
-                "command": "vdm-vscode.addPluginJars",
-                "title": "Add plugin jars",
+                "command": "vdm-vscode.addExtensionJars",
+                "title": "Add VDMJ extension jars",
                 "category": "VDM"
             },
             {
@@ -252,6 +242,12 @@
                 "title": "Manage VDMJ Plugins",
                 "category": "VDM",
                 "enablement": "vdm-vscode.managePlugins"
+            },
+            {
+                "command": "vdm-vscode.manageAnnotations",
+                "title": "Manage VDMJ Annotations",
+                "category": "VDM",
+                "enablement": "vdm-vscode.manageAnnotations"
             },
             {
                 "command": "vdm-vscode.javaCodeGen",
@@ -549,6 +545,10 @@
                     "group": "workspace@1"
                 },
                 {
+                    "command": "vdm-vscode.manageAnnotations",
+                    "group": "workspace@1"
+                },
+                {
                     "command": "vdm-vscode.addRunConfiguration",
                     "group": "workspace@2"
                 },
@@ -793,6 +793,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "vdm-vscode.manageAnnotations",
+                    "when": "false"
+                },
+                {
                     "command": "vdm-vscode.addRunConfiguration",
                     "when": "false"
                 },
@@ -822,22 +826,7 @@
                         },
                         "default": [],
                         "scope": "resource",
-                        "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server. [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
-                    },
-                    "vdm-vscode.server.libraries.VDM-Libraries": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "default": [],
-                        "scope": "resource",
-                        "markdownDescription": "A list containing library jar paths. Adding a folder path will load all library jars in the folder. If using a relative path it is expected to be defined at the 'folder' settings level as the path is expected to be relative to the corresponding project. [Find folders](command:vdm-vscode.addLibraryJarFolders), [Find files](command:vdm-vscode.addLibraryJars), or type in manually."
-                    },
-                    "vdm-vscode.server.libraries.includeDefaultLibraries": {
-                        "type": "boolean",
-                        "default": true,
-                        "scope": "resource",
-                        "description": "Include the default libraries that are packaged with the extension."
+                        "markdownDescription": "List of folder and/or file paths that should be included in the class path for the language server. Examples of things to add to the classpath are external format readers and QuickCheck strategies; to add libraries, plugins or annotations, instead use the configuration 'Server > Extension Search Paths' for better integration. [Find folders](command:vdm-vscode.addFoldersToClassPath), [Find files](command:vdm-vscode.addFilesToClassPath), or type in manually."
                     },
                     "vdm-vscode.server.highPrecision": {
                         "type": "boolean",
@@ -851,13 +840,13 @@
                         "scope": "resource",
                         "description": "Activate the VDMJ -strict flag that highlights (with warnings) where a specification is taking advantage of lenient parsing rule."
                     },
-                    "vdm-vscode.server.plugins.searchPaths": {
+                    "vdm-vscode.server.extensionSearchPaths": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         },
                         "scope": "resource",
-                        "description": "Specifies additional paths to search for plugins. The paths can either point directly to a plugin jar or a directory containing multiple plugin jars. [Add a directory to the search path](command:vdm-vscode.addPluginJarFolders), [Add a jar to the search path](command:vdm-vscode.addLibraryJars), or type in a path manually."
+                        "markdownDescription": "Specifies additional paths to search for VDMJ extensions, i.e. plugins, libraries and annotations. Other types of extensions are not natively supported by the extension, and will need to be added to the class path through the 'Server > Class Path Additions' configuration. The paths can either point directly to an extension jar or a directory containing multiple extension jars. [Add directories to the search path](command:vdm-vscode.addExtensionJarFolders), [Add jars to the search path](command:vdm-vscode.addExtensionJars), or type a path manually."
                     },
                     "vdm-vscode.server.plugins.enabled": {
                         "type": "object",
@@ -866,7 +855,16 @@
                             "type": "boolean"
                         },
                         "scope": "resource",
-                        "description": "Plugins to enable/disable. If a plugin is enabled in the User settings but explicitly disabled in the Workspace or Workspace Folder settings, the Workspace settings take precedence. This settings only affects plugins found in the search paths. Use [Manage all plugins](command:vdm-vscode.addLibraryJarFolders) to adjust settings."
+                        "markdownDescription": "Plugins to enable/disable. If a plugin is enabled in the User settings but explicitly disabled in the Workspace or Workspace Folder settings, the Workspace settings take precedence. This setting only affects plugins found in the search paths."
+                    },
+                    "vdm-vscode.server.annotations.enabled": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "description": "Enable annotation with given name",
+                            "type": "boolean"
+                        },
+                        "scope": "resource",
+                        "markdownDescription": "Annotations to enable/disable. If an annotation is enabled in the User settings but explicitly disabled in the Workspace or Workspace Folder settings, the Workspace settings take precedence. This setting only affects annotations found in the search paths."
                     }
                 }
             },
