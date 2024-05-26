@@ -237,7 +237,7 @@ export class VDMJExtensionsHandler extends AutoDisposable {
         const extensionSources = this.getUserExtensionSources(wsFolder);
         return extensionSources.filter(async (extSrc) => {
             const jarFile = await JarFile.open(extSrc.jarPath);
-            return jarFile.fileExists("META-INF/annotation.json");
+            return jarFile.fileExists("META-INF/annotations.json");
         });
     }
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { ConfigurationTarget, QuickPickItem, Uri, WorkspaceFolder, commands, window, workspace } from "vscode";
+import { ConfigurationTarget, QuickPickItem, QuickPickItemKind, Uri, WorkspaceFolder, commands, window, workspace } from "vscode";
 import { ClientManager } from "../ClientManager";
 import AutoDisposable from "../helper/AutoDisposable";
 import { VdmDialect, getDialect } from "../util/DialectUtil";
@@ -55,13 +55,16 @@ export class ManageAnnotationsHandler extends AutoDisposable {
     ): Promise<AnnotationState> {
         const discoveredAnnotations = await ManageAnnotationsHandler.getAllAnnotationInfo(dialect, precision, wsFolder);
         const enabledAnnotations = new Set(ManageAnnotationsHandler.getEnabledAnnotations(wsFolder));
+        const disabledAnnotations = new Set(ManageAnnotationsHandler.getDisabledAnnotations(wsFolder));
 
         const currentAnnotationState: AnnotationState = new Map();
 
         for (const [annotationName, annotationInfo] of discoveredAnnotations) {
             currentAnnotationState.set(annotationName, {
                 ...annotationInfo,
-                enabled: enabledAnnotations.has(annotationName),
+                enabled:
+                    enabledAnnotations.has(annotationName) ||
+                    (annotationInfo.source.type === "builtin" && !disabledAnnotations.has(annotationName)),
             });
         }
 
@@ -69,10 +72,18 @@ export class ManageAnnotationsHandler extends AutoDisposable {
     }
 
     private async promptUserManageAnnotations(currentState: AnnotationState): Promise<AnnotationState> {
+        const defaultAnnotationItems: QuickPickAnnotationItem[] = [];
         const userAnnotationItems: QuickPickAnnotationItem[] = [];
 
         for (const annotationInfo of currentState.values()) {
-            if (annotationInfo.source.type === "user") {
+            if (annotationInfo.source.type === "builtin") {
+                defaultAnnotationItems.push({
+                    label: annotationInfo.name,
+                    description: annotationInfo.description,
+                    picked: annotationInfo.enabled,
+                    metadata: annotationInfo,
+                });
+            } else if (annotationInfo.source.type === "user") {
                 userAnnotationItems.push({
                     label: annotationInfo.name,
                     description: annotationInfo.description,
@@ -82,10 +93,24 @@ export class ManageAnnotationsHandler extends AutoDisposable {
             }
         }
 
-        const selectedAnnotations = await window.showQuickPick<QuickPickAnnotationItem>(userAnnotationItems, {
-            placeHolder: currentState.values().next() === undefined ? "No annotations available.." : "Choose annotations..",
-            canPickMany: true,
-        });
+        const selectedAnnotations = await window.showQuickPick<QuickPickAnnotationItem>(
+            [
+                {
+                    label: "Built-in annotations",
+                    kind: QuickPickItemKind.Separator,
+                },
+                ...defaultAnnotationItems,
+                {
+                    label: "User annotations",
+                    kind: QuickPickItemKind.Separator,
+                },
+                ...userAnnotationItems,
+            ],
+            {
+                placeHolder: currentState.values().next() === undefined ? "No annotations available.." : "Choose annotations..",
+                canPickMany: true,
+            }
+        );
 
         if (selectedAnnotations === undefined) {
             return undefined;
@@ -157,6 +182,22 @@ export class ManageAnnotationsHandler extends AutoDisposable {
         return enabledAnnotationNames;
     }
 
+    public static getDisabledAnnotations(wsFolder: WorkspaceFolder): string[] {
+        const enabledAnnotationsConfiguration: Record<string, boolean> =
+            workspace.getConfiguration("vdm-vscode.server.annotations", wsFolder.uri)?.get("enabled") ?? {};
+
+        // Merge settings
+        const disabledAnnotationNames: string[] = [];
+
+        for (const [annotationName, enabled] of Object.entries(enabledAnnotationsConfiguration)) {
+            if (!enabled) {
+                disabledAnnotationNames.push(annotationName);
+            }
+        }
+
+        return disabledAnnotationNames;
+    }
+
     public static async getClasspathAdditions(wsFolder: WorkspaceFolder, dialect: VdmDialect, precision: VDMJPrecision) {
         const currentState = await ManageAnnotationsHandler.getAnnotationState(wsFolder, dialect, precision);
 
@@ -167,7 +208,7 @@ export class ManageAnnotationsHandler extends AutoDisposable {
 
     private static async getAnnotationInfoFromSource(source: AnnotationSource): Promise<SourcedAnnotationMetadata | undefined> {
         const jarFile = await JarFile.open(source.jarPath);
-        const rawAnnotationInfo = await jarFile.readFile("META-INF/annotation.json");
+        const rawAnnotationInfo = await jarFile.readFile("META-INF/annotations.json");
 
         if (!rawAnnotationInfo) {
             return undefined;

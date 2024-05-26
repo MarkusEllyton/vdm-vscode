@@ -1,3 +1,8 @@
+### 1.4.0-beta.9
+- Annotation management improvements.
+  - Show built-in annotations in UI.
+- Fix: add `annotations.json` to built-in annotations jar so it is detected.
+
 ### 1.4.0-beta.8
 - Update VDMJ plugin jars - add plugin.json metadata to UML plugin/
 - Add/update VDMJ HP jars and QuickCheck plugin.

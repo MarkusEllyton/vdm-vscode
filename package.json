@@ -1,6 +1,6 @@
 {
     "name": "vdm-vscode",
-    "version": "1.4.0-beta.8",
+    "version": "1.4.0-beta.9",
     "publisher": "overturetool",
     "engines": {
         "vscode": "^1.64.0",
@@ -864,7 +864,7 @@
                             "type": "boolean"
                         },
                         "scope": "resource",
-                        "markdownDescription": "Annotations to enable/disable. If an annotation is enabled in the User settings but explicitly disabled in the Workspace or Workspace Folder settings, the Workspace settings take precedence. This setting only affects annotations found in the search paths."
+                        "markdownDescription": "Annotations to enable/disable. If an annotation is enabled in the User settings but explicitly disabled in the Workspace or Workspace Folder settings, the Workspace settings take precedence. This setting only affects annotations found in the search paths. Built-in annotations are enabled by default and must be explicitly disabled if not needed."
                     }
                 }
             },
