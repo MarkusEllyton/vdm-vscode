@@ -1,12 +1,17 @@
 import path = require("path");
 import { readFile } from "fs-extra";
 import { Uri } from "vscode";
+import { z } from "zod";
+import { quickcheckConfigSchema } from "./Schemas";
 
-export async function readOptionalConfiguration(wsFolder: Uri, filename: string, callback: (config: any) => void) {
+export type QuickCheckConfig = z.infer<typeof quickcheckConfigSchema>;
+
+export async function readOptionalConfiguration<T>(wsFolder: Uri, filename: string, schema: z.ZodType<T>, callback: (config: T) => void) {
     const configPath = path.resolve(wsFolder.fsPath, ".vscode", filename);
-    let callbackValue: string | null = null;
+    let callbackValue: T | null = null;
     try {
-        callbackValue = JSON.parse(await readFile(configPath, { encoding: "utf8" }));
+        const validJson = JSON.parse(await readFile(configPath, { encoding: "utf8" }));
+        callbackValue = schema.parse(validJson);
     } catch (err) {}
 
     callback(callbackValue);

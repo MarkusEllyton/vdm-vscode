@@ -11,6 +11,7 @@ import {
     RequestType,
 } from "vscode-languageclient";
 import { VdmLaunchConfiguration } from "../../handlers/AddRunConfigurationHandler";
+import { QuickCheckConfig } from "../../util/PluginConfigurationUtil";
 
 export interface ProofObligationGenerationClientCapabilities {
     /**
@@ -183,11 +184,4 @@ export namespace RunQuickCheckRequest {
     ) => HandlerResult<QuickCheckInfo[], void>;
 }
 
-export interface RunQuickCheckRequestParams {
-    strategies: Array<unknown>;
-    timeout: number;
-    config: {
-        timeout: number;
-        obligations: Array<number>;
-    };
-}
+export type RunQuickCheckRequestParams = QuickCheckConfig;

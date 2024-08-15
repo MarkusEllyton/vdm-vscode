@@ -1,4 +1,4 @@
-import { commands, Uri, window, workspace, WorkspaceFolder } from "vscode";
+import { commands, Uri, window, workspace, WorkspaceFolder, extensions } from "vscode";
 import AutoDisposable from "../helper/AutoDisposable";
 import * as Util from "../util/Util";
 import * as Path from "path";
@@ -6,6 +6,7 @@ import * as Fs from "fs-extra";
 import { getFilesFromDirRecur } from "../util/DirectoriesUtil";
 import { getExtensionPath } from "../util/ExtensionUtil";
 import { JarFile } from "../util/JarFile";
+import { packageJsonSchema } from "../util/Schemas";
 
 type ExtensionType = "builtin" | "user";
 
@@ -112,6 +113,7 @@ export class VDMJExtensionsHandler extends AutoDisposable {
 
     private static getDefaultExtensionSources(jarPaths: string[], userDefinedExtensionSources: ExtensionSource[]): ExtensionSource[] {
         if (userDefinedExtensionSources.length > 0) {
+            // Only keep those paths that have not been overwritten by a user-defined extension
             jarPaths = jarPaths.filter((ijp: string) => {
                 const jarName: string = Path.basename(ijp);
                 const existingExtensionSource = userDefinedExtensionSources.find((userLib) => Path.basename(userLib.jarPath) === jarName);
@@ -121,6 +123,36 @@ export class VDMJExtensionsHandler extends AutoDisposable {
 
         return jarPaths.map((jarPath) => ({
             type: "builtin",
+            jarPath,
+        }));
+    }
+
+    private static getExtensionExtensionSources(userDefinedExtensionSources: ExtensionSource[]): ExtensionSource[] {
+        const jarPaths: string[] = extensions.all
+            .reduce((enhancementPaths, ext) => {
+                const pj = ext.packageJSON;
+                const { success, data } = packageJsonSchema.safeParse(pj);
+
+                if (!success || !data["vdmjEnhancements"]) {
+                    return enhancementPaths;
+                }
+
+                const resolvedPaths = data["vdmjEnhancements"].map((relPath) => {
+                    return Uri.joinPath(ext.extensionUri, relPath).fsPath;
+                });
+
+                const newAcc = [...enhancementPaths, ...resolvedPaths];
+
+                return newAcc;
+            }, [])
+            .filter((ijp: string) => {
+                const jarName: string = Path.basename(ijp);
+                const existingExtensionSource = userDefinedExtensionSources.find((userLib) => Path.basename(userLib.jarPath) === jarName);
+                return !existingExtensionSource;
+            });
+
+        return jarPaths.map((jarPath) => ({
+            type: "user",
             jarPath,
         }));
     }
@@ -147,8 +179,24 @@ export class VDMJExtensionsHandler extends AutoDisposable {
     private static getUserLibrarySources(wsFolder: WorkspaceFolder): LibrarySource[] {
         const extensionSources = this.getUserExtensionSources(wsFolder);
         return extensionSources.filter(async (extSrc) => {
-            const jarFile = await JarFile.open(extSrc.jarPath);
-            return jarFile.fileExists("META-INF/library.json");
+            try {
+                const jarFile = await JarFile.open(extSrc.jarPath);
+                return jarFile.fileExists("META-INF/library.json");
+            } catch {
+                return false;
+            }
+        });
+    }
+
+    private static getExtensionLibrarySources(userDefinedLibrarySources: PluginSource[]): PluginSource[] {
+        const extensionSources = this.getExtensionExtensionSources(userDefinedLibrarySources);
+        return extensionSources.filter(async (extSrc) => {
+            try {
+                const jarFile = await JarFile.open(extSrc.jarPath);
+                return jarFile.fileExists("META-INF/library.json");
+            } catch {
+                return false;
+            }
         });
     }
 
@@ -166,7 +214,8 @@ export class VDMJExtensionsHandler extends AutoDisposable {
 
     public static getAllLibrarySources(wsFolder: WorkspaceFolder): LibrarySource[] {
         const userLibraries = this.getUserLibrarySources(wsFolder);
-        const defaultLibraries = this.getDefaultLibrarySources(wsFolder, userLibraries);
+        const extensionLibraries = this.getExtensionLibrarySources(userLibraries);
+        const defaultLibraries = this.getDefaultLibrarySources(wsFolder, extensionLibraries);
 
         return userLibraries.concat(defaultLibraries);
     }
@@ -192,8 +241,24 @@ export class VDMJExtensionsHandler extends AutoDisposable {
     public static getUserPluginSources(wsFolder: WorkspaceFolder): PluginSource[] {
         const extensionSources = this.getUserExtensionSources(wsFolder);
         return extensionSources.filter(async (extSrc) => {
-            const jarFile = await JarFile.open(extSrc.jarPath);
-            return jarFile.fileExists("META-INF/plugin.json");
+            try {
+                const jarFile = await JarFile.open(extSrc.jarPath);
+                return jarFile.fileExists("META-INF/plugin.json");
+            } catch {
+                return false;
+            }
+        });
+    }
+
+    private static getExtensionPluginSources(userDefinedPluginSources: PluginSource[]): PluginSource[] {
+        const extensionSources = this.getExtensionExtensionSources(userDefinedPluginSources);
+        return extensionSources.filter(async (extSrc) => {
+            try {
+                const jarFile = await JarFile.open(extSrc.jarPath);
+                return jarFile.fileExists("META-INF/plugin.json");
+            } catch {
+                return false;
+            }
         });
     }
 
@@ -210,9 +275,10 @@ export class VDMJExtensionsHandler extends AutoDisposable {
 
     public static getAllPluginSources(wsFolder: WorkspaceFolder): PluginSource[] {
         const userPlugins = this.getUserPluginSources(wsFolder);
-        const defaultPlugins = this.getDefaultPluginSources(wsFolder, userPlugins);
+        const extensionPlugins = this.getExtensionPluginSources(userPlugins);
+        const defaultPlugins = this.getDefaultPluginSources(wsFolder, extensionPlugins);
 
-        return userPlugins.concat(defaultPlugins);
+        return userPlugins.concat(defaultPlugins, extensionPlugins);
     }
 
     // Annotations
@@ -236,8 +302,24 @@ export class VDMJExtensionsHandler extends AutoDisposable {
     public static getUserAnnotationsSources(wsFolder: WorkspaceFolder): AnnotationSource[] {
         const extensionSources = this.getUserExtensionSources(wsFolder);
         return extensionSources.filter(async (extSrc) => {
-            const jarFile = await JarFile.open(extSrc.jarPath);
-            return jarFile.fileExists("META-INF/annotations.json");
+            try {
+                const jarFile = await JarFile.open(extSrc.jarPath);
+                return jarFile.fileExists("META-INF/annotations.json");
+            } catch {
+                return false;
+            }
+        });
+    }
+
+    private static getExtensionAnnotationSources(userDefinedAnnotationSources: AnnotationSource[]): AnnotationSource[] {
+        const extensionSources = this.getExtensionExtensionSources(userDefinedAnnotationSources);
+        return extensionSources.filter(async (extSrc) => {
+            try {
+                const jarFile = await JarFile.open(extSrc.jarPath);
+                return jarFile.fileExists("META-INF/annotations.json");
+            } catch {
+                return false;
+            }
         });
     }
 
@@ -254,8 +336,9 @@ export class VDMJExtensionsHandler extends AutoDisposable {
 
     public static getAllAnnotationSources(wsFolder: WorkspaceFolder): AnnotationSource[] {
         const userAnnotations = this.getUserAnnotationsSources(wsFolder);
-        const defaultAnnotations = this.getDefaultAnnotationSources(wsFolder, userAnnotations);
+        const extensionAnnotations = this.getExtensionAnnotationSources(userAnnotations);
+        const defaultAnnotations = this.getDefaultAnnotationSources(wsFolder, extensionAnnotations);
 
-        return userAnnotations.concat(defaultAnnotations);
+        return userAnnotations.concat(defaultAnnotations, extensionAnnotations);
     }
 }
