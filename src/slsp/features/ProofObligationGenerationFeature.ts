@@ -25,7 +25,7 @@ import {
 } from "../protocol/ProofObligationGeneration";
 import { SpecificationLanguageClient } from "../SpecificationLanguageClient";
 import { ProofObligation as CodeProofObligation } from "../views/ProofObligationPanel";
-import { mergeDeep, readOptionalConfiguration } from "../../util/PluginConfigurationUtil";
+import { mergeDeep, QuickCheckConfig, readOptionalConfiguration } from "../../util/PluginConfigurationUtil";
 import { quickcheckConfigSchema } from "../../util/Schemas";
 
 export default class ProofObligationGenerationFeature implements StaticFeature {
@@ -124,15 +124,14 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
 
         return new Promise((resolve, reject) => {
             readOptionalConfiguration(wsFolder, "quickcheck.json", quickcheckConfigSchema, (config: RunQuickCheckRequestParams) => {
-                const configWithObligations = mergeDeep(
-                    {
-                        config: {
-                            obligations: poIds,
-                        },
-                        workDoneToken: workDoneToken,
+                const calculatedConfig: QuickCheckConfig & { workDoneToken: string } = {
+                    config: {
+                        timeout: 5,
+                        obligations: poIds,
                     },
-                    config
-                );
+                    workDoneToken: workDoneToken,
+                };
+                const configWithObligations: QuickCheckConfig = mergeDeep(calculatedConfig, config);
 
                 this._client
                     .sendRequest(RunQuickCheckRequest.type, configWithObligations, cancellationToken)

@@ -221,7 +221,7 @@ export class AddLibraryHandler extends AutoDisposable {
     }
 
     private async getAllLibInfo(dialect: VdmDialect, wsFolder: WorkspaceFolder): Promise<LibrarySourceMap> {
-        const libraries: LibrarySource[] = VDMJExtensionsHandler.getAllLibrarySources(wsFolder);
+        const libraries: LibrarySource[] = await VDMJExtensionsHandler.getAllLibrarySources(wsFolder);
 
         if (libraries.length === 0) {
             return new Map();

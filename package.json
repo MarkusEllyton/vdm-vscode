@@ -1,6 +1,6 @@
 {
     "name": "vdm-vscode",
-    "version": "1.4.0-beta.9",
+    "version": "1.4.0-beta.10",
     "publisher": "overturetool",
     "engines": {
         "vscode": "^1.64.0",
@@ -76,6 +76,9 @@
                 "*.odt": "${capture}.odt.vdmsl, ${capture}.odt.vdmpp, ${capture}.odt.vdmrt",
                 "*.md": "${capture}.md.vdmsl, ${capture}.md.vdmpp, ${capture}.md.vdmrt",
                 "*.adoc": "${capture}.adoc.vdmsl, ${capture}.adoc.vdmpp, ${capture}.adoc.vdmrt, ${capture}.html"
+            },
+            "vdm-vscode.server.plugins.enabled": {
+                "quickcheck": true
             }
         },
         "languages": [

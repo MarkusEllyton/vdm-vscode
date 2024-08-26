@@ -135,7 +135,9 @@ export class ManageAnnotationsHandler extends AutoDisposable {
     private async handleManageAnnotations(wsFolder: WorkspaceFolder) {
         try {
             const dialect = await getDialect(wsFolder, this.clientManager);
-            const precision: VDMJPrecision = this.clientManager.isHighPrecisionClient(this.clientManager.get(wsFolder)) ? "hp" : "standard";
+            const precision: VDMJPrecision = this.clientManager.isHighPrecisionClient(this.clientManager.get(wsFolder))
+                ? "high"
+                : "standard";
             const initialAnnotationState = await ManageAnnotationsHandler.getAnnotationState(wsFolder, dialect, precision);
             const updatedAnnotationState = await this.promptUserManageAnnotations(initialAnnotationState);
 
@@ -251,7 +253,7 @@ export class ManageAnnotationsHandler extends AutoDisposable {
         precision: VDMJPrecision,
         wsFolder: WorkspaceFolder
     ): Promise<AnnotationSourceMap> {
-        const annotations: AnnotationSource[] = VDMJExtensionsHandler.getAllAnnotationSources(wsFolder);
+        const annotations: AnnotationSource[] = await VDMJExtensionsHandler.getAllAnnotationSources(wsFolder);
 
         if (annotations.length === 0) {
             return new Map();

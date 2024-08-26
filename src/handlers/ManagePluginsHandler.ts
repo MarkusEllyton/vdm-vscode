@@ -128,7 +128,9 @@ export class ManagePluginsHandler extends AutoDisposable {
     private async handleManagePlugins(wsFolder: WorkspaceFolder) {
         try {
             const dialect = await getDialect(wsFolder, this.clientManager);
-            const precision: VDMJPrecision = this.clientManager.isHighPrecisionClient(this.clientManager.get(wsFolder)) ? "hp" : "standard";
+            const precision: VDMJPrecision = this.clientManager.isHighPrecisionClient(this.clientManager.get(wsFolder))
+                ? "high"
+                : "standard";
             const initialPluginState = await ManagePluginsHandler.getPluginState(wsFolder, dialect, precision);
             const updatedPluginState = await this.promptUserManagePlugins(initialPluginState);
 
@@ -139,7 +141,6 @@ export class ManagePluginsHandler extends AutoDisposable {
 
             // Commit changes
             if (this.areStatesEqual(initialPluginState, updatedPluginState)) {
-                console.log([...updatedPluginState], [...initialPluginState]);
                 // Nothing has changed, so don't apply the new configuration.
                 // This is done to prevent an unnecessary prompt to reload VS Code in the case where a plugin is enabled on the user-level,
                 // and remains enabled after managing plugins on the workspace-level.
@@ -226,7 +227,7 @@ export class ManagePluginsHandler extends AutoDisposable {
         precision: VDMJPrecision,
         wsFolder: WorkspaceFolder
     ): Promise<PluginSourceMap> {
-        const plugins: PluginSource[] = VDMJExtensionsHandler.getAllPluginSources(wsFolder);
+        const plugins: PluginSource[] = await VDMJExtensionsHandler.getAllPluginSources(wsFolder);
 
         if (plugins.length === 0) {
             return new Map();

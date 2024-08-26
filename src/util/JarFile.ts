@@ -19,7 +19,7 @@ export class JarFile {
     public fileExists(path: string): boolean {
         const fileObject = this._zipFile.file(path);
 
-        return fileObject === null;
+        return fileObject !== null;
     }
 
     public async readFile(path: string): Promise<Buffer | undefined> {

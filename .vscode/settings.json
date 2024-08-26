@@ -1,28 +1,27 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-  "files.exclude": {
-    "out": false // set this to true to hide the "out" folder with the compiled JS files
-  },
-  "search.exclude": {
-    "out": true, // set this to false to include "out" folder in search results
-    "dist": true,
-    "resources/examples": true,
-    "vdm_test_files": true
-  },
-  "typescript.tsdk": "./node_modules/typescript/lib",
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-  },
-  "[json]": {
-    "editor.quickSuggestions": {
-      "strings": true
+    "files.exclude": {
+        "out": false // set this to true to hide the "out" folder with the compiled JS files
     },
-    "editor.suggest.insertMode": "replace",
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
-
-  },
-  "prettier.tabWidth": 4,
-  "prettier.printWidth": 140, // we want to use the TS server from our node_modules folder to control its version,
+    "search.exclude": {
+        "out": true, // set this to false to include "out" folder in search results
+        "dist": true,
+        "resources/examples": true,
+        "vdm_test_files": true
+    },
+    "typescript.tsdk": "./node_modules/typescript/lib",
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "[json]": {
+        "editor.quickSuggestions": {
+            "strings": true
+        },
+        "editor.suggest.insertMode": "replace",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+    },
+    "prettier.tabWidth": 4,
+    "prettier.printWidth": 140 // we want to use the TS server from our node_modules folder to control its version,
 }

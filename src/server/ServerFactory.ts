@@ -131,13 +131,13 @@ export class ServerFactory implements Disposable {
         // Construct class path.
         let classPath: string = "";
         // Start by adding user defined library jar paths
-        VDMJExtensionsHandler.getAllLibrarySources(wsFolder).forEach((libPath) => (classPath += libPath.jarPath + path.delimiter));
+        (await VDMJExtensionsHandler.getAllLibrarySources(wsFolder)).forEach((libPath) => (classPath += libPath.jarPath + path.delimiter));
 
         // Add plugin jars
         const pluginClassPathAdditions = await ManagePluginsHandler.getClasspathAdditions(
             wsFolder,
             dialect,
-            serverConfig.get("highPrecision", false) ? "hp" : "standard"
+            serverConfig.get("highPrecision", false) ? "high" : "standard"
         );
 
         pluginClassPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
@@ -146,7 +146,7 @@ export class ServerFactory implements Disposable {
         const annotationClassPathAdditions = await ManageAnnotationsHandler.getClasspathAdditions(
             wsFolder,
             dialect,
-            serverConfig.get("highPrecision", false) ? "hp" : "standard"
+            serverConfig.get("highPrecision", false) ? "high" : "standard"
         );
 
         annotationClassPathAdditions.forEach((jarPath) => (classPath += jarPath + path.delimiter));
@@ -204,7 +204,6 @@ export class ServerFactory implements Disposable {
                 let outputChannel: OutputChannel = window.createOutputChannel("VDM: " + wsFolder.name.toString());
                 console.log("Creating output channel for server.");
                 server.stdout.addListener("data", (chunk) => {
-                    console.log("Output received!", chunk);
                     outputChannel.show(true);
                     outputChannel.appendLine(chunk);
                 });

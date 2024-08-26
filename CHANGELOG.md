@@ -1,3 +1,11 @@
+### 1.4.0-beta.10
+- QuickCheck panel UI improvements
+  - Static position at bottom of PO view.
+  - Utilize space in panel more efficiently
+  - Make UI more stable by reserving space for scroll bar
+- Increase default QuickCheck timeout to 5 seconds.
+- Enable QuickCheck plugin by default.
+
 ### 1.4.0-beta.9
 - Annotation management improvements.
   - Show built-in annotations in UI.

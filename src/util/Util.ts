@@ -6,7 +6,7 @@ import { commands, Disposable, DocumentFilter, DocumentSelector, window, workspa
 import * as glob from "glob";
 import { ClientManager } from "../ClientManager";
 
-export type VDMJPrecision = "standard" | "hp";
+export type VDMJPrecision = "standard" | "high";
 
 export function writeToLog(path: string, msg: string) {
     let logStream = Fs.createWriteStream(path, { flags: "a" });
@@ -168,5 +168,5 @@ export function match(documentSelector: DocumentSelector, uri: Uri) {
 }
 
 export function getPrecisionOfWorkspace(wsFolder: WorkspaceFolder, clientManager: ClientManager): VDMJPrecision {
-    return clientManager.isHighPrecisionClient(clientManager.get(wsFolder)) ? "hp" : "standard";
+    return clientManager.isHighPrecisionClient(clientManager.get(wsFolder)) ? "high" : "standard";
 }

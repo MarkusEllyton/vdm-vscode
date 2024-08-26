@@ -1,9 +1,10 @@
-import React, { PropsWithChildren, useState, useEffect, useMemo, ChangeEvent } from "react";
+import React, { PropsWithChildren, useState, useEffect, useMemo } from "react";
 import { VSCodeTextField, VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { VSCodeAPI } from "../shared.types";
 import { ProofObligation } from "../../slsp/protocol/ProofObligationGeneration";
 import { ProofObligationsTable } from "./ProofObligationsTable";
 import { QuickCheckPanel } from "./QuickCheckPanel";
+import { Global, css } from "@emotion/react";
 
 export interface FormattedProofObligation extends Omit<ProofObligation, "name"> {
     name: string;
@@ -37,6 +38,7 @@ const formatProofObligations = (posSource: Array<ProofObligation>): Array<Format
 };
 
 interface FilterState {
+    isFiltering: boolean;
     matchingRows: number;
     totalRows: number;
 }
@@ -48,7 +50,7 @@ interface ProofObligationsHeaderMenuProps {
     onExpandCollapse: () => void;
     enableQuickCheck: boolean;
     openPos: Set<number>;
-    filterState?: FilterState;
+    filterState: FilterState;
     onClickQuickCheck?: () => void;
     disableQuickCheck: boolean;
 }
@@ -60,7 +62,7 @@ const ProofObligationsHeaderMenu = ({
     openPos,
     filterState,
     onClickQuickCheck,
-    disableQuickCheck
+    disableQuickCheck,
 }: ProofObligationsHeaderMenuProps) => {
     return (
         <div
@@ -79,13 +81,17 @@ const ProofObligationsHeaderMenu = ({
                 }}
                 type="text"
             >
-                Filter {filterState ? `(Showing ${filterState.matchingRows} of ${filterState.totalRows} rows.)` : null}
+                Filter {filterState.isFiltering ? `(Showing ${filterState.matchingRows} of ${filterState.totalRows} rows.)` : null}
             </VSCodeTextField>
             <div css={{ flexShrink: 0 }}>
                 <VSCodeButton css={{ margin: "0 1em" }} appearance="secondary" onClick={onExpandCollapse}>
-                    {openPos.size === filterState?.totalRows ? "Collapse all proof obligations" : "Expand all proof obligations"}
+                    {openPos.size === filterState.totalRows ? "Collapse all proof obligations" : "Expand all proof obligations"}
                 </VSCodeButton>
-                {enableQuickCheck ? <VSCodeButton disabled={disableQuickCheck} onClick={onClickQuickCheck}>Run QuickCheck</VSCodeButton> : null}
+                {enableQuickCheck ? (
+                    <VSCodeButton disabled={disableQuickCheck} onClick={onClickQuickCheck}>
+                        Run QuickCheck
+                    </VSCodeButton>
+                ) : null}
             </div>
         </div>
     );
@@ -121,10 +127,15 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
     const [runningQuickCheck, setRunningQuickCheck] = useState<boolean>(false);
 
     const filteredPos = useMemo(() => filterPOs(pos, filterText), [filterText, pos]);
-    const currentFilterState: FilterState | undefined =
+    const currentFilterState: FilterState =
         filterText === ""
-            ? undefined
+            ? {
+                  isFiltering: false,
+                  matchingRows: pos.length,
+                  totalRows: pos.length,
+              }
             : {
+                  isFiltering: true,
                   matchingRows: filteredPos.length,
                   totalRows: pos.length,
               };
@@ -209,6 +220,15 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
 
     return (
         <ProofObligationContainer>
+            <Global
+                styles={css`
+                    body,
+                    html,
+                    #root {
+                        height: 100%;
+                    }
+                `}
+            />
             <ProofObligationsHeaderMenu
                 onFilterChanged={setFilterText}
                 onExpandCollapse={handleExpandCollapseClick}
@@ -222,7 +242,8 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
             <div
                 css={{
                     flex: "1",
-                    overflow: "scroll",
+                    overflow: "auto",
+                    scrollbarGutter: "stable"
                 }}
             >
                 <ProofObligationsTable

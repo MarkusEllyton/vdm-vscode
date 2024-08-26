@@ -3,7 +3,6 @@ import { TableHeader } from "./ProofObligationsTableHeader";
 import { FormattedProofObligation } from "./ProofObligationsView";
 import { VSCodeAPI } from "../shared.types";
 import { MouseEvent } from "react";
-import { CounterExampleVariables } from "../../slsp/protocol/ProofObligationGeneration";
 
 interface QuickCheckExampleTableProps {
     variables: Array<[string, string]>;
@@ -63,17 +62,18 @@ export const QuickCheckPanel = ({ proofObligation, vscodeApi, onClose }: QuickCh
                 width: "100%",
                 whiteSpace: "pre-wrap",
                 backgroundColor: "var(--vscode-textBlockQuote-background)",
-                overflow: "scroll",
+                overflow: "auto",
+                scrollbarGutter: "stable",
                 padding: "2em",
+                marginBottom: "20px",
                 boxSizing: "border-box",
-                minHeight: "200px",
                 maxHeight: "50%",
                 "&::-webkit-scrollbar-track": {
                     backgroundColor: "var(--vscode-editor-background)",
                 },
             }}
         >
-            <div css={{ display: "flex", flexDirection: "row", justifyContent: "flex-start" }}>
+            <div css={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", marginBottom: "1em" }}>
                 <VSCodeButton
                     css={{ justifySelf: "flex-start", position: "relative", top: "0px" }}
                     appearance="icon"
@@ -85,6 +85,14 @@ export const QuickCheckPanel = ({ proofObligation, vscodeApi, onClose }: QuickCh
                 >
                     <span className="codicon codicon-close"></span>
                 </VSCodeButton>
+                <span
+                    css={{
+                        fontSize: "1.2em",
+                        marginLeft: "1em",
+                    }}
+                >
+                    Proof obligation #{proofObligation.id}
+                </span>
                 {launchCommand != null ? (
                     <VSCodeButton
                         css={{
@@ -101,12 +109,6 @@ export const QuickCheckPanel = ({ proofObligation, vscodeApi, onClose }: QuickCh
                         <span slot="start" className="codicon codicon-debug-start"></span>
                     </VSCodeButton>
                 ) : null}
-            </div>
-            <div css={{
-                fontSize: "1.2em",
-                marginBlock: "0.75em"
-            }}>
-            Proof obligation #{proofObligation.id}
             </div>
 
             {provedByMessage}

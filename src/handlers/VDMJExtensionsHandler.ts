@@ -157,6 +157,27 @@ export class VDMJExtensionsHandler extends AutoDisposable {
         }));
     }
 
+    private static async filterExtensionSources<T extends ExtensionSource>(extSources: T[], metaFileTest: string): Promise<T[]> {
+        const validSources: T[] = [];
+
+        for (const extSrc of extSources) {
+            let jarFile: JarFile;
+            try {
+                jarFile = await JarFile.open(extSrc.jarPath);
+            } catch {
+                continue;
+            }
+
+            if (!jarFile.fileExists(metaFileTest)) {
+                continue;
+            }
+
+            validSources.push(extSrc);
+        }
+
+        return validSources;
+    }
+
     // Libraries
     public static getIncludedLibrariesFolderPath(wsFolder: WorkspaceFolder): string {
         // Get the standard or high precision path of the included library jars folder
@@ -176,28 +197,14 @@ export class VDMJExtensionsHandler extends AutoDisposable {
         return libPath;
     }
 
-    private static getUserLibrarySources(wsFolder: WorkspaceFolder): LibrarySource[] {
+    private static async getUserLibrarySources(wsFolder: WorkspaceFolder): Promise<LibrarySource[]> {
         const extensionSources = this.getUserExtensionSources(wsFolder);
-        return extensionSources.filter(async (extSrc) => {
-            try {
-                const jarFile = await JarFile.open(extSrc.jarPath);
-                return jarFile.fileExists("META-INF/library.json");
-            } catch {
-                return false;
-            }
-        });
+        return await this.filterExtensionSources(extensionSources, "META-INF/library.json");
     }
 
-    private static getExtensionLibrarySources(userDefinedLibrarySources: PluginSource[]): PluginSource[] {
+    private static async getExtensionLibrarySources(userDefinedLibrarySources: PluginSource[]): Promise<PluginSource[]> {
         const extensionSources = this.getExtensionExtensionSources(userDefinedLibrarySources);
-        return extensionSources.filter(async (extSrc) => {
-            try {
-                const jarFile = await JarFile.open(extSrc.jarPath);
-                return jarFile.fileExists("META-INF/library.json");
-            } catch {
-                return false;
-            }
-        });
+        return await this.filterExtensionSources(extensionSources, "META-INF/library.json");
     }
 
     private static getDefaultLibrarySources(wsFolder: WorkspaceFolder, userDefinedLibrarySources: LibrarySource[]): LibrarySource[] {
@@ -212,9 +219,9 @@ export class VDMJExtensionsHandler extends AutoDisposable {
         return this.getDefaultExtensionSources(includedJarsPaths, userDefinedLibrarySources);
     }
 
-    public static getAllLibrarySources(wsFolder: WorkspaceFolder): LibrarySource[] {
-        const userLibraries = this.getUserLibrarySources(wsFolder);
-        const extensionLibraries = this.getExtensionLibrarySources(userLibraries);
+    public static async getAllLibrarySources(wsFolder: WorkspaceFolder): Promise<LibrarySource[]> {
+        const userLibraries = await this.getUserLibrarySources(wsFolder);
+        const extensionLibraries = await this.getExtensionLibrarySources(userLibraries);
         const defaultLibraries = this.getDefaultLibrarySources(wsFolder, extensionLibraries);
 
         return userLibraries.concat(defaultLibraries);
@@ -238,28 +245,14 @@ export class VDMJExtensionsHandler extends AutoDisposable {
         return pluginPath;
     }
 
-    public static getUserPluginSources(wsFolder: WorkspaceFolder): PluginSource[] {
+    public static async getUserPluginSources(wsFolder: WorkspaceFolder): Promise<PluginSource[]> {
         const extensionSources = this.getUserExtensionSources(wsFolder);
-        return extensionSources.filter(async (extSrc) => {
-            try {
-                const jarFile = await JarFile.open(extSrc.jarPath);
-                return jarFile.fileExists("META-INF/plugin.json");
-            } catch {
-                return false;
-            }
-        });
+        return await this.filterExtensionSources(extensionSources, "META-INF/plugin.json");
     }
 
-    private static getExtensionPluginSources(userDefinedPluginSources: PluginSource[]): PluginSource[] {
+    private static async getExtensionPluginSources(userDefinedPluginSources: PluginSource[]): Promise<PluginSource[]> {
         const extensionSources = this.getExtensionExtensionSources(userDefinedPluginSources);
-        return extensionSources.filter(async (extSrc) => {
-            try {
-                const jarFile = await JarFile.open(extSrc.jarPath);
-                return jarFile.fileExists("META-INF/plugin.json");
-            } catch {
-                return false;
-            }
-        });
+        return await this.filterExtensionSources(extensionSources, "META-INF/plugin.json");
     }
 
     public static getDefaultPluginSources(wsFolder: WorkspaceFolder, userDefinedPluginSources: PluginSource[]): PluginSource[] {
@@ -273,9 +266,9 @@ export class VDMJExtensionsHandler extends AutoDisposable {
         return this.getDefaultExtensionSources(includedJarsPaths, userDefinedPluginSources);
     }
 
-    public static getAllPluginSources(wsFolder: WorkspaceFolder): PluginSource[] {
-        const userPlugins = this.getUserPluginSources(wsFolder);
-        const extensionPlugins = this.getExtensionPluginSources(userPlugins);
+    public static async getAllPluginSources(wsFolder: WorkspaceFolder): Promise<PluginSource[]> {
+        const userPlugins = await this.getUserPluginSources(wsFolder);
+        const extensionPlugins = await this.getExtensionPluginSources(userPlugins);
         const defaultPlugins = this.getDefaultPluginSources(wsFolder, extensionPlugins);
 
         return userPlugins.concat(defaultPlugins, extensionPlugins);
@@ -283,7 +276,7 @@ export class VDMJExtensionsHandler extends AutoDisposable {
 
     // Annotations
     public static getIncludedAnnotationsFolderPath(wsFolder: WorkspaceFolder): string {
-        const pluginPath: string = Path.resolve(
+        const annotationsPath: string = Path.resolve(
             getExtensionPath(),
             "resources",
             "jars",
@@ -291,39 +284,28 @@ export class VDMJExtensionsHandler extends AutoDisposable {
             "annotations"
         );
 
-        if (!Fs.existsSync(pluginPath)) {
-            console.log("Invalid path for default annotations: " + pluginPath);
+        if (!Fs.existsSync(annotationsPath)) {
+            console.log("Invalid path for default annotations: " + annotationsPath);
             return undefined;
         }
 
-        return pluginPath;
+        return annotationsPath;
     }
 
-    public static getUserAnnotationsSources(wsFolder: WorkspaceFolder): AnnotationSource[] {
+    public static async getUserAnnotationsSources(wsFolder: WorkspaceFolder): Promise<AnnotationSource[]> {
         const extensionSources = this.getUserExtensionSources(wsFolder);
-        return extensionSources.filter(async (extSrc) => {
-            try {
-                const jarFile = await JarFile.open(extSrc.jarPath);
-                return jarFile.fileExists("META-INF/annotations.json");
-            } catch {
-                return false;
-            }
-        });
+        return await this.filterExtensionSources(extensionSources, "META-INF/annotations.json");
     }
 
-    private static getExtensionAnnotationSources(userDefinedAnnotationSources: AnnotationSource[]): AnnotationSource[] {
+    private static async getExtensionAnnotationSources(userDefinedAnnotationSources: AnnotationSource[]): Promise<AnnotationSource[]> {
         const extensionSources = this.getExtensionExtensionSources(userDefinedAnnotationSources);
-        return extensionSources.filter(async (extSrc) => {
-            try {
-                const jarFile = await JarFile.open(extSrc.jarPath);
-                return jarFile.fileExists("META-INF/annotations.json");
-            } catch {
-                return false;
-            }
-        });
+        return await this.filterExtensionSources(extensionSources, "META-INF/annotations.json");
     }
 
-    public static getDefaultAnnotationSources(wsFolder: WorkspaceFolder, userDefinedPluginSources: AnnotationSource[]): AnnotationSource[] {
+    public static getDefaultAnnotationSources(
+        wsFolder: WorkspaceFolder,
+        userDefinedAnnotationSources: AnnotationSource[]
+    ): AnnotationSource[] {
         const defaultAnnotationsPath = this.getIncludedAnnotationsFolderPath(wsFolder);
 
         if (!defaultAnnotationsPath) {
@@ -331,12 +313,12 @@ export class VDMJExtensionsHandler extends AutoDisposable {
         }
         let includedJarsPaths: string[] = getFilesFromDirRecur(defaultAnnotationsPath, "jar");
 
-        return this.getDefaultExtensionSources(includedJarsPaths, userDefinedPluginSources);
+        return this.getDefaultExtensionSources(includedJarsPaths, userDefinedAnnotationSources);
     }
 
-    public static getAllAnnotationSources(wsFolder: WorkspaceFolder): AnnotationSource[] {
-        const userAnnotations = this.getUserAnnotationsSources(wsFolder);
-        const extensionAnnotations = this.getExtensionAnnotationSources(userAnnotations);
+    public static async getAllAnnotationSources(wsFolder: WorkspaceFolder): Promise<AnnotationSource[]> {
+        const userAnnotations = await this.getUserAnnotationsSources(wsFolder);
+        const extensionAnnotations = await this.getExtensionAnnotationSources(userAnnotations);
         const defaultAnnotations = this.getDefaultAnnotationSources(wsFolder, extensionAnnotations);
 
         return userAnnotations.concat(defaultAnnotations, extensionAnnotations);
