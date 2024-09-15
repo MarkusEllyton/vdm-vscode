@@ -1,3 +1,6 @@
+### 1.4.0-beta.11
+- Fix incorrect highlighting of character literals by reverting changes to syntax highlighting.
+
 ### 1.4.0-beta.10
 - QuickCheck panel UI improvements
   - Static position at bottom of PO view.

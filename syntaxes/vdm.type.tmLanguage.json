@@ -19,9 +19,6 @@
         },
         {
             "include": "#strings"
-        },
-        {
-            "include": "#charliterals"
         }
     ],
     "repository": {
@@ -49,17 +46,6 @@
             "name": "string.quoted.double.vdm",
             "begin": "\"",
             "end": "\"",
-            "patterns": [
-                {
-                    "name": "constant.character.escape.vdm",
-                    "match": "\\\\."
-                }
-            ]
-        },
-        "charliterals": {
-            "name": "string.quoted.single.vdm",
-            "begin": "'",
-            "end": "'",
             "patterns": [
                 {
                     "name": "constant.character.escape.vdm",
