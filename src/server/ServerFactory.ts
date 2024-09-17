@@ -174,10 +174,16 @@ export class ServerFactory implements Disposable {
             args.push(`-Dvdmj.strict=true`);
         }
 
-        // Set strict
+        // Set verbose
         const setVerbose = serverConfig.get("verbose", false);
         if (setVerbose) {
             args.push(`-Dvdmj.verbose=true`);
+        }
+
+        // Set classic release mode
+        const setClassic = serverConfig.get("classic", false);
+        if (setClassic) {
+            args.push(`-Dvdmj.release=classic`);
         }
 
         // Construct java launch arguments
