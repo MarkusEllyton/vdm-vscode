@@ -20,7 +20,7 @@ import {
 } from "vscode";
 import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
-import { isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUtil";
+import { isSameUri, isSameWorkspaceFolder } from "../../util/WorkspaceFoldersUtil";
 import { VdmDapSupport } from "../../dap/VdmDapSupport";
 import { ProofObligationCounterExample, ProofObligationWitness, QuickCheckInfo } from "../protocol/ProofObligationGeneration";
 import { CancellationToken } from "vscode-languageclient";
@@ -172,7 +172,7 @@ export class ProofObligationPanel implements Disposable {
         }
 
         let wsFolder = workspace.getWorkspaceFolder(uri);
-        this.createWebView(poProvider.provider.quickCheckProvider, wsFolder);
+        this.createWebView(poProvider.provider.quickCheckProvider, uri);
         this.updateContent();
 
         this._lastUri = uri;
@@ -252,15 +252,28 @@ export class ProofObligationPanel implements Disposable {
         }, []);
     }
 
-    protected createWebView(withQuickCheck: boolean, wsFolder?: WorkspaceFolder) {
+    private getPanelTitle(uri: Uri): string {
+        const wsFolder = workspace.getWorkspaceFolder(uri);
+        const relPath = workspace.asRelativePath(uri, false);
+
+        let title = `Proof Obligations` + (wsFolder ? ": " + wsFolder.name : "");
+
+        if (!isSameUri(uri, wsFolder.uri)) {
+            title += ` [${relPath}]`;
+        }
+
+        return title;
+    }
+
+    protected createWebView(withQuickCheck: boolean, uri?: Uri) {
         // Define which column the po view should be in
         const column = window.activeTextEditor ? ViewColumn.Beside : ViewColumn.Two;
 
         // Check if a panel already exists
         if (this._panel) {
             // Check if panel is for another workspace folder
-            if (wsFolder && !isSameWorkspaceFolder(wsFolder, this._lastWsFolder)) {
-                this._panel.title = "Proof Obligations" + (wsFolder ? ": " + wsFolder.name : "");
+            if (uri && !isSameUri(uri, this._lastUri)) {
+                this._panel.title = this.getPanelTitle(uri);
             }
 
             this._panel.reveal(column, true);
@@ -276,7 +289,7 @@ export class ProofObligationPanel implements Disposable {
                 this._panel ||
                 window.createWebviewPanel(
                     this.viewType,
-                    "Proof Obligations" + (wsFolder ? ": " + wsFolder.name : ""),
+                    this.getPanelTitle(uri),
                     {
                         viewColumn: column,
                         preserveFocus: true,
@@ -317,7 +330,7 @@ export class ProofObligationPanel implements Disposable {
                                 context: "repl",
                             };
 
-                            VdmDapSupport.getAdHocVdmDebugger(wsFolder, false).then((ds) => {
+                            VdmDapSupport.getAdHocVdmDebugger(this._lastWsFolder, false).then((ds) => {
                                 setTimeout(() => ds.customRequest("evaluate", requestBody).then(() => debug.stopDebugging(ds)), 100);
                             });
                             break;
@@ -331,7 +344,7 @@ export class ProofObligationPanel implements Disposable {
                                 async (_progress, _token) => {
                                     try {
                                         const qcInfos = await this.onRunQuickCheck(
-                                            wsFolder.uri,
+                                            this._lastUri,
                                             message.data.poIds ?? [],
                                             _token,
                                             _progress

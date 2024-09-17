@@ -15,7 +15,7 @@ const sortPOs = (proofObligations: Array<FormattedProofObligation>, sortingState
 
     const _sortedPOs = proofObligations.sort((a, b) => {
         const aVal = a[sortKey] ?? "";
-        const bVal = b[sortKey] ?? ""
+        const bVal = b[sortKey] ?? "";
 
         if (aVal < bVal) {
             return -1 * directionFactor;
@@ -44,7 +44,9 @@ const QuickCheckButton = ({ po, onClick }: QuickCheckButtonProps) => {
     }
 
     return (
-        <button title="Open QuickCheck Panel" onClick={onClick}
+        <button
+            title="Open QuickCheck Panel"
+            onClick={onClick}
             css={{
                 background: "none",
                 border: "none",
@@ -59,6 +61,18 @@ const QuickCheckButton = ({ po, onClick }: QuickCheckButtonProps) => {
     );
 };
 
+export interface ProofObligationsTableMessageProps {
+    msg: string;
+}
+
+const ProofObligationsTableMessage = ({ msg }: ProofObligationsTableMessageProps) => {
+    return (
+        <div css={{ width: "100%", justifyContent: "center", alignItems: "center", display: "flex", flexDirection: "column", flexGrow: 1 }}>
+            <span css={{ fontSize: "1.25em", color: "var(--vscode-errorForeground)" }}>{msg}</span>
+        </div>
+    );
+};
+
 export interface ProofObligationsTableProps {
     headers: Array<keyof FormattedProofObligation>;
     pos: Array<FormattedProofObligation>;
@@ -69,65 +83,87 @@ export interface ProofObligationsTableProps {
     selectionState: SelectionState | null;
 }
 
-export const ProofObligationsTable = ({ headers, pos, onJumpToSource, openPos, onClickRow, onOpenQuickCheck, selectionState }: ProofObligationsTableProps) => {
+export const ProofObligationsTable = ({
+    headers,
+    pos,
+    onJumpToSource,
+    openPos,
+    onClickRow,
+    onOpenQuickCheck,
+    selectionState,
+}: ProofObligationsTableProps) => {
     const [sortingState, setSortingState] = useState<SortingState<FormattedProofObligation>>({
         id: "id",
         direction: "ascending",
     });
 
     const sortedPOs = sortPOs(pos, sortingState);
+    const shouldRenderTable = pos.length !== 0;
 
     return (
-        <VSCodeDataGrid gridTemplateColumns="2fr 3fr 8fr 3fr" css={{ flexGrow: "1" }}>
-            <TableHeader<FormattedProofObligation> headers={headers} onUpdateSortingState={setSortingState} />
-            {sortedPOs.map((row) => (
-                <React.Fragment key={`pog-row-${row.id}`}>
-                    <VSCodeDataGridRow
-                        onClick={() => onClickRow(row)}
-                        css={[{ borderTop: "2px solid var(--vscode-textBlockQuote-background)" }, row.id === selectionState?.id && {border: "1px solid var(--vscode-list-focusOutline)"}]}
-                    >
-                        <VSCodeDataGridCell grid-column="1">
-                            <VSCodeButton title="Jump to source"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    onJumpToSource(row);
-                                }}
-                                appearance="icon"
-                                css={{ position: "relative", top: "-4px", left: "-8px" }}
+        <>
+            {shouldRenderTable ? (
+                <VSCodeDataGrid gridTemplateColumns="2fr 3fr 8fr 3fr" css={{ flexGrow: "1" }}>
+                    <TableHeader<FormattedProofObligation> headers={headers} onUpdateSortingState={setSortingState} />
+                    {sortedPOs.map((row) => (
+                        <React.Fragment key={`pog-row-${row.id}`}>
+                            <VSCodeDataGridRow
+                                onClick={() => onClickRow(row)}
+                                css={[
+                                    { borderTop: "2px solid var(--vscode-textBlockQuote-background)" },
+                                    row.id === selectionState?.id && { border: "1px solid var(--vscode-list-focusOutline)" },
+                                ]}
                             >
-                                <span className="codicon codicon-go-to-file"></span>
-                            </VSCodeButton>
-                            &nbsp;{row.id}
-                        </VSCodeDataGridCell>
-                        <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="2">
-                            {row.kind}
-                        </VSCodeDataGridCell>
-                        <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="3">
-                            {row.breakableName}
-                        </VSCodeDataGridCell>
-                        <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="4">
-                            <QuickCheckButton onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                onOpenQuickCheck(row);
-                            }} po={row} />
-                        </VSCodeDataGridCell>
-                    </VSCodeDataGridRow>
-                    {openPos.has(row.id) ? (
-                        <div
-                            css={{
-                                width: "100%",
-                                padding: "1em 0.5em",
-                                boxSizing: "border-box",
-                                whiteSpace: "pre-wrap",
-                            }}
-                        >
-                            {row.source}
-                        </div>
-                    ) : null}
-                </React.Fragment>
-            ))}
-        </VSCodeDataGrid>
+                                <VSCodeDataGridCell grid-column="1">
+                                    <VSCodeButton
+                                        title="Jump to source"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            onJumpToSource(row);
+                                        }}
+                                        appearance="icon"
+                                        css={{ position: "relative", top: "-4px", left: "-8px" }}
+                                    >
+                                        <span className="codicon codicon-go-to-file"></span>
+                                    </VSCodeButton>
+                                    &nbsp;{row.id}
+                                </VSCodeDataGridCell>
+                                <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="2">
+                                    {row.kind}
+                                </VSCodeDataGridCell>
+                                <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="3">
+                                    {row.breakableName}
+                                </VSCodeDataGridCell>
+                                <VSCodeDataGridCell css={{ overflowWrap: "break-word" }} grid-column="4">
+                                    <QuickCheckButton
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            onOpenQuickCheck(row);
+                                        }}
+                                        po={row}
+                                    />
+                                </VSCodeDataGridCell>
+                            </VSCodeDataGridRow>
+                            {openPos.has(row.id) ? (
+                                <div
+                                    css={{
+                                        width: "100%",
+                                        padding: "1em 0.5em",
+                                        boxSizing: "border-box",
+                                        whiteSpace: "pre-wrap",
+                                    }}
+                                >
+                                    {row.source}
+                                </div>
+                            ) : null}
+                        </React.Fragment>
+                    ))}
+                </VSCodeDataGrid>
+            ) : (
+                <ProofObligationsTableMessage msg="No Proof Obligations have been generated. Ensure that the specification does not contain any errors."></ProofObligationsTableMessage>
+            )}
+        </>
     );
 };

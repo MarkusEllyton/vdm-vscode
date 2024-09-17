@@ -243,7 +243,8 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 css={{
                     flex: "1",
                     overflow: "auto",
-                    scrollbarGutter: "stable"
+                    scrollbarGutter: "stable",
+                    display: "flex"
                 }}
             >
                 <ProofObligationsTable
