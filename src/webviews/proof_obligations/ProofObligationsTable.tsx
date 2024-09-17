@@ -1,4 +1,4 @@
-import React, { MouseEvent, useState } from "react";
+import React, { MouseEvent, useEffect, useState } from "react";
 import { FormattedProofObligation, SelectionState } from "./ProofObligationsView";
 import { VSCodeButton, VSCodeDataGrid, VSCodeDataGridCell, VSCodeDataGridRow } from "@vscode/webview-ui-toolkit/react";
 import { TableHeader, SortingState } from "./ProofObligationsTableHeader";
@@ -66,11 +66,21 @@ export interface ProofObligationsTableMessageProps {
 }
 
 const ProofObligationsTableMessage = ({ msg }: ProofObligationsTableMessageProps) => {
-    return (
+    const [isVisible, setIsVisible] = useState(false);
+
+    // Delay the rendeirng of the component, otherwise the component quickly flashes on the screen before being replaced by the table.
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    return isVisible ? (
         <div css={{ width: "100%", justifyContent: "center", alignItems: "center", display: "flex", flexDirection: "column", flexGrow: 1 }}>
             <span css={{ fontSize: "1.25em", color: "var(--vscode-errorForeground)" }}>{msg}</span>
         </div>
-    );
+    ) : null;
 };
 
 export interface ProofObligationsTableProps {
