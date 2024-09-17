@@ -1,3 +1,9 @@
+### 1.4.0-beta.12
+- Add extension configuration to enable VDM classic release.
+- Change PO view title to also include file name if PO generation was run on a single file, as opposed to the entire workspace folder.
+- Add a warning message in the PO view if no POs are available.
+- Fix bug in multi-root workspaces, where QuickCheck requests would be sent to the incorrect VDMJ instance.
+
 ### 1.4.0-beta.11
 - Fix incorrect highlighting of character literals by reverting changes to syntax highlighting.
 
