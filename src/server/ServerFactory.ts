@@ -181,9 +181,9 @@ export class ServerFactory implements Disposable {
         }
 
         // Set classic release mode
-        const setClassic = serverConfig.get("classicRelease", false);
-        if (setClassic) {
-            args.push(`-Dvdmj.release=classic`);
+        const vdmjRelease = serverConfig.get("release", "vdm10");
+        if (vdmjRelease) {
+            args.push(`-Dvdmj.release=${vdmjRelease}`);
         }
 
         // Construct java launch arguments

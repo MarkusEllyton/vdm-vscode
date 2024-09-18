@@ -835,11 +835,13 @@
                         "scope": "resource",
                         "description": "Activate the VDMJ -strict flag that highlights (with warnings) where a specification is taking advantage of lenient parsing rule."
                     },
-                    "vdm-vscode.server.classicRelease": {
-                        "type": "boolean",
-                        "default": false,
+                    "vdm-vscode.server.release": {
+                        "type": "string",
+                        "default": "vdm10",
                         "scope": "resource",
-                        "markdownDescription": "Activates the `classic` release of VDMJ, allowing VDMJ to parse specs that adhere to the VDM classic release."
+                        "enum": ["vdm10", "classic"],
+                        "markdownDescription": "Activates the selected release of VDMJ, allowing VDMJ to parse specs that adhere to the this VDM release.",
+                        "markdownEnumDescriptions": ["Enables the `vdm10` release of VDMJ.", "Enables the `classic` release of VDMJ."]
                     },
                     "vdm-vscode.server.extensionSearchPaths": {
                         "type": "array",
