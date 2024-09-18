@@ -1,5 +1,5 @@
 ### 1.4.0-beta.13
-- Change extension configuration of VDMJ release to be an enumration of "vdm10" and "classic"
+- Change extension configuration of VDMJ release to be an enumeration of "vdm10" and "classic"
 - Add workspace settings.json to all classic examples
 
 ### 1.4.0-beta.12
