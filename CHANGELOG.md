@@ -1,3 +1,7 @@
+### 1.4.0-beta.13
+- Change extension configuration of VDMJ release to be an enumration of "vdm10" and "classic"
+- Add workspace settings.json to all classic examples
+
 ### 1.4.0-beta.12
 - Add extension configuration to enable VDM classic release.
 - Change PO view title to also include file name if PO generation was run on a single file, as opposed to the entire workspace folder.
