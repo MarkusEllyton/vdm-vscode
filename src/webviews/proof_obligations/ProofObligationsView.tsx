@@ -71,7 +71,7 @@ const ProofObligationsHeaderMenu = ({
                 flexDirection: "row",
                 justifyContent: "space-between",
                 margin: "0.5em 1em 1em 0.5em",
-                alignItems: "center",
+                alignItems: "end",
             }}
         >
             <VSCodeTextField
@@ -190,11 +190,11 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
     };
 
     const onMessage = (e: MessageEvent) => {
+        console.log("new message", e.data.command);
         switch (e.data.command) {
             case "newPOs":
                 setPos(formatProofObligations(e.data.pos));
                 setProofObligation(null);
-                setPosAreInvalid(false);
                 setRunningQuickCheck(false);
                 break;
             case "rebuildPOview":
@@ -203,6 +203,9 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                 break;
             case "posInvalid":
                 setPosAreInvalid(true);
+                break;
+            case "posValid":
+                setPosAreInvalid(false);
                 break;
         }
     };
@@ -255,6 +258,7 @@ export const ProofObligationsView = ({ vscodeApi, enableQuickCheck = false }: Pr
                     openPos={openPos}
                     onOpenQuickCheck={handleOpenQuickCheck}
                     selectionState={proofObligation}
+                    posInvalid={posAreInvalid}
                 />
             </div>
 

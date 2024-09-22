@@ -167,7 +167,9 @@ export class ProofObligationPanel implements Disposable {
         try {
             let res = await poProvider.provider.provideProofObligations(uri);
             this._pos = [...res];
+            this.clearWarning();
         } catch (e) {
+            this.displayWarning();
             console.warn(`[Proof Obligation View] Provider failed with message: ${e}`);
         }
 
@@ -378,8 +380,17 @@ export class ProofObligationPanel implements Disposable {
     }
 
     private displayWarning() {
-        // Post display warming message to javascript
-        this._panel.webview.postMessage({ command: "posInvalid" });
+        // Display warning that PO generation failed in webview
+        this.onReady.then(() => {
+            this._panel.webview.postMessage({ command: "posInvalid" });
+        });
+    }
+
+    private clearWarning() {
+        // HIde warning that PO generation failed in webview
+        this.onReady.then(() => {
+            this._panel.webview.postMessage({ command: "posValid" });
+        });
     }
 
     protected updateContent() {

@@ -91,6 +91,7 @@ export interface ProofObligationsTableProps {
     onClickRow: (po: FormattedProofObligation) => void;
     onOpenQuickCheck: (po: FormattedProofObligation) => void;
     selectionState: SelectionState | null;
+    posInvalid: boolean;
 }
 
 export const ProofObligationsTable = ({
@@ -101,6 +102,7 @@ export const ProofObligationsTable = ({
     onClickRow,
     onOpenQuickCheck,
     selectionState,
+    posInvalid
 }: ProofObligationsTableProps) => {
     const [sortingState, setSortingState] = useState<SortingState<FormattedProofObligation>>({
         id: "id",
@@ -108,7 +110,9 @@ export const ProofObligationsTable = ({
     });
 
     const sortedPOs = sortPOs(pos, sortingState);
-    const shouldRenderTable = pos.length !== 0;
+    const shouldRenderTable = !((pos.length === 0) && posInvalid)
+
+    console.log("Should render", shouldRenderTable, "because", pos.length, posInvalid)
 
     return (
         <>
