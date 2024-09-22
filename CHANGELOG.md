@@ -1,3 +1,9 @@
+### 1.4.0-beta.14
+- Fix default enabled plugins not always being enabled for users updating from an earlier version of the extension.
+- Enable `uml` as default plugin.
+- Improve alignment of filter and buttons in Proof Obligation View.
+- Improve warning message added in 1.4.0-beta.12, so it only displays when proof obligation fails.
+
 ### 1.4.0-beta.13
 - Change extension configuration of VDMJ release to be an enumeration of "vdm10" and "classic"
 - Add workspace settings.json to all classic examples
