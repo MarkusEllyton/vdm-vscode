@@ -76,9 +76,6 @@
                 "*.odt": "${capture}.odt.vdmsl, ${capture}.odt.vdmpp, ${capture}.odt.vdmrt",
                 "*.md": "${capture}.md.vdmsl, ${capture}.md.vdmpp, ${capture}.md.vdmrt",
                 "*.adoc": "${capture}.adoc.vdmsl, ${capture}.adoc.vdmpp, ${capture}.adoc.vdmrt, ${capture}.html"
-            },
-            "vdm-vscode.server.plugins.enabled": {
-                "quickcheck": true
             }
         },
         "languages": [
@@ -516,7 +513,7 @@
                 },
                 {
                     "command": "vdm-vscode.translate.vdm2uml",
-                    "when": "explorerResourceIsFolder || resourceLangId == vdmpp || resourceLangId == vdmrt",
+                    "when": "(explorerResourceIsFolder || resourceLangId == vdmpp || resourceLangId == vdmrt) && vdm-vscode.translate.vdm2uml",
                     "group": "translate@4"
                 },
                 {
@@ -658,7 +655,7 @@
                 },
                 {
                     "command": "vdm-vscode.translate.uml2vdm",
-                    "when": "resourceExtname == .puml",
+                    "when": "resourceExtname == .puml && vdm-vscode.translate.uml2vdm",
                     "group": "vdm@2"
                 }
             ],
@@ -682,7 +679,7 @@
                 },
                 {
                     "command": "vdm-vscode.translate.uml2vdm",
-                    "when": "resourceExtname == .puml",
+                    "when": "resourceExtname == .puml && vdm-vscode.translate.uml2vdm",
                     "group": "vdm@1"
                 }
             ],

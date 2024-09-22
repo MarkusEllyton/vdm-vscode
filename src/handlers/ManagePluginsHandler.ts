@@ -9,6 +9,8 @@ import * as Util from "../util/Util";
 import { VDMJPrecision } from "../util/Util";
 import { PluginSource, VDMJExtensionsHandler } from "./VDMJExtensionsHandler";
 
+const DEFAULT_ENABLED_PLUGINS = ["quickcheck", "uml"];
+
 interface PluginMetadata {
     name: string;
     description: string;
@@ -51,13 +53,15 @@ export class ManagePluginsHandler extends AutoDisposable {
     private static async getPluginState(wsFolder: WorkspaceFolder, dialect: VdmDialect, precision: VDMJPrecision): Promise<PluginState> {
         const discoveredPlugins = await ManagePluginsHandler.getAllPluginInfo(dialect, precision, wsFolder);
         const enabledPlugins = new Set(ManagePluginsHandler.getEnabledPlugins(wsFolder));
+        const disabledPlugins = new Set(ManagePluginsHandler.getDisabledPlugins(wsFolder));
 
         const currentPluginState: PluginState = new Map();
 
         for (const [pluginName, pluginInfo] of discoveredPlugins) {
             currentPluginState.set(pluginName, {
                 ...pluginInfo,
-                enabled: enabledPlugins.has(pluginName),
+                enabled:
+                    enabledPlugins.has(pluginName) || (DEFAULT_ENABLED_PLUGINS.includes(pluginName) && !disabledPlugins.has(pluginName)),
             });
         }
 
@@ -174,6 +178,22 @@ export class ManagePluginsHandler extends AutoDisposable {
         }
 
         return enabledPluginNames;
+    }
+
+    public static getDisabledPlugins(wsFolder: WorkspaceFolder): string[] {
+        const enabledPluginsConfiguration: Record<string, boolean> =
+            workspace.getConfiguration("vdm-vscode.server.plugins", wsFolder.uri)?.get("enabled") ?? {};
+
+        // Merge settings
+        const disabledPluginNames: string[] = [];
+
+        for (const [pluginName, enabled] of Object.entries(enabledPluginsConfiguration)) {
+            if (!enabled) {
+                disabledPluginNames.push(pluginName);
+            }
+        }
+
+        return disabledPluginNames;
     }
 
     public static async getClasspathAdditions(wsFolder: WorkspaceFolder, dialect: VdmDialect, precision: VDMJPrecision) {
