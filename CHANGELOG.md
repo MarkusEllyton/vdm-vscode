@@ -1,72 +1,26 @@
-### 1.4.0-beta.14
+### 1.5.0
+- Update VDMJ JARs to stable 4.6.0 release.
 - Fix default enabled plugins not always being enabled for users updating from an earlier version of the extension.
 - Enable `uml` as default plugin.
-- Improve alignment of filter and buttons in Proof Obligation View.
-- Improve warning message added in 1.4.0-beta.12, so it only displays when proof obligation fails.
+- Minor improvements to Proof Obligation view.
+- Add extension configuration of VDMJ release mode. Classic release can now be enabled.
 
-### 1.4.0-beta.13
-- Change extension configuration of VDMJ release to be an enumeration of "vdm10" and "classic"
-- Add workspace settings.json to all classic examples
-
-### 1.4.0-beta.12
-- Add extension configuration to enable VDM classic release.
-- Change PO view title to also include file name if PO generation was run on a single file, as opposed to the entire workspace folder.
-- Add a warning message in the PO view if no POs are available.
-- Fix bug in multi-root workspaces, where QuickCheck requests would be sent to the incorrect VDMJ instance.
-
-### 1.4.0-beta.11
-- Fix incorrect highlighting of character literals by reverting changes to syntax highlighting.
-
-### 1.4.0-beta.10
-- QuickCheck panel UI improvements
-  - Static position at bottom of PO view.
-  - Utilize space in panel more efficiently
-  - Make UI more stable by reserving space for scroll bar
-- Increase default QuickCheck timeout to 5 seconds.
-- Enable QuickCheck plugin by default.
-
-### 1.4.0-beta.9
-- Annotation management improvements.
-  - Show built-in annotations in UI.
-- Fix: add `annotations.json` to built-in annotations jar so it is detected.
-
-### 1.4.0-beta.8
-- Update VDMJ plugin jars - add plugin.json metadata to UML plugin/
-- Add/update VDMJ HP jars and QuickCheck plugin.
-- Add annotation management UI.
-- Clean up handling of VDMJ extensions, i.e. libraries, plugins, annotations. They all share common search path now.
-
-### 1.4.0-beta.7
-- Update VDMJ plugin jars - add plugin.json metadata to QuickCheck plugin
-- Add plugin management UI.
-- Improve library addition functionality to also show user-defined libraries.
-
-### 1.4.0-beta.6
-- Update VDMJ jars.
-- Fix bug that would cause POG view to blank on QuickCheck results without launch command.
-
-### 1.4.0-beta.5
-- Show incremental progress during QuickCheck runs.
-
-### 1.4.0-beta.4
-- Add visual progress indicator when QuickCheck is running.
-- Show cancel button instead of "Run QuickCheck" during long-running QuickCheck.
-
-### 1.4.0-beta.3
-- QuickCheck now only runs on the visible subset of proof obligations.
-- Fixed bug where QuickCheck info would become stale when changing settings and subsequently running QuickCheck. 
-
-### 1.4.0-beta.2
-- Fix char literals syntax highlighting (issue #190)
-- Fix name of generated debug configuration (issue #214)
-- Fix code lenses on polymorphic functions (issue #188)
-- Add the ability to configure QuickCheck using JSON
-
-### 1.4.0-beta.1
-- Updated VDMJ to 4.6.0-SNAPSHOT
-- Added QuickCheck plugin 4.6.0-SNAPSHOT
-- Rewrite of Proof Obligation webview using React.
-- Added QuickCheck functionality into Proof Obligation view.
+### 1.4.0
+- Updates to VDMJ:
+  -  Added the slsp/POG/quickcheck processing to support the GUI button
+  - Better support for disconnect and terminate (faster)
+  - Use a "quickcheck.json" configuration file
+  - Rationalise the LSP plugin architecture
+  - Prohibit certain VDM-RT operators during initialization
+  - Improved stack trace display for object oriented dialects
+  - Support for improved annotation and plugin configuration in UI
+  - Various minor bug fixes.
+- Include QuickCheck plugin as default plugin in extension.
+- Rewrite of Proof Obligation View that adds integration with QuickCheck tool.
+- Improvements to the management of VDMJ plugins, libraries and annotations.
+- Add the ability to read VDMJ enhancements from external VS Code extensions.
+- Fix name of generated debug configuration (issue #214).
+- Fix code lenses on polymorphic functions (issue #188).
 
 ### 1.3.7
 - Hotfix to VDMJ to support Java 19
