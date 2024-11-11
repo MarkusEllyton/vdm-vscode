@@ -16,8 +16,9 @@ export const quickcheckConfigSchema = z
                 timeout: z
                     .number()
                     .int()
-                    .gte(1, "The timeout has to be at least 1 second.")
-                    .describe("The timeout of a QuickCheck execution in seconds."),
+                    .gte(0, "The timeout has to be at least 0 second.")
+                    .optional()
+                    .describe("The timeout of a QuickCheck execution in milliseconds."),
                 obligations: z
                     .array(z.number().int().gte(1))
                     .optional()

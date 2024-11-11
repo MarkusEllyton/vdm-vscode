@@ -160,7 +160,9 @@ export class RTLogViewHandler extends AutoDisposable {
 
     dispose() {
         // Figure out how to close the editor that showed the log view
-        this._panel.dispose();
+        if (this._panel) {
+            this._panel.dispose();
+        }
         while (this._disposables.length) {
             this._disposables.pop().dispose();
         }

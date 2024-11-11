@@ -845,7 +845,7 @@
                         "items": {
                             "type": "string"
                         },
-                        "scope": "resource",
+                        "scope": "window",
                         "markdownDescription": "Specifies additional paths to search for VDMJ extensions, i.e. plugins, libraries and annotations. Other types of extensions are not natively supported by the extension, and will need to be added to the class path through the 'Server > Class Path Additions' configuration. The paths can either point directly to an extension jar or a directory containing multiple extension jars. [Add directories to the search path](command:vdm-vscode.addExtensionJarFolders), [Add jars to the search path](command:vdm-vscode.addExtensionJars), or type a path manually."
                     },
                     "vdm-vscode.server.plugins.enabled": {

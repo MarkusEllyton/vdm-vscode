@@ -190,7 +190,6 @@ export class ServerFactory implements Disposable {
         args.push(...["-cp", classPath, "lsp.LSPServerSocket", "-" + dialect, "-lsp", lspPort.toString(), "-dap", "0"]);
 
         // Start the LSP server
-        console.log("server args", args);
         let server = child_process.spawn(this._javaPath, args, { cwd: wsFolder.uri.fsPath });
 
         // Create output channel for server stdout

@@ -126,7 +126,6 @@ export default class ProofObligationGenerationFeature implements StaticFeature {
             readOptionalConfiguration(wsFolder, "quickcheck.json", quickcheckConfigSchema, (config: RunQuickCheckRequestParams) => {
                 const calculatedConfig: QuickCheckConfig & { workDoneToken: string } = {
                     config: {
-                        timeout: 5,
                         obligations: poIds,
                     },
                     workDoneToken: workDoneToken,

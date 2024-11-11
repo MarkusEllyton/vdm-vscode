@@ -17,6 +17,7 @@ import {
     debug,
     ProgressLocation,
     Progress,
+    TabInputWebview,
 } from "vscode";
 import { ClientManager } from "../../ClientManager";
 import * as util from "../../util/Util";
@@ -96,6 +97,21 @@ export class ProofObligationPanel implements Disposable {
         this.onReady = new Promise<void>((resolve, reject) => {
             this._onReadyCallbacks = new OnReady(resolve, reject);
         });
+
+        // Workaround to bug: https://github.com/microsoft/vscode/issues/188257
+        // disposing of the WebviewPanel on extension deactivation does not close the panel,
+        // leaving it orphaned and unresponsive when the extension activates again.
+        const orphanedTabs = window.tabGroups.all
+            .flatMap((tabGroup) => tabGroup.tabs)
+            .filter((tab) => {
+                if (tab.input instanceof TabInputWebview) {
+                    return tab.input.viewType.includes(this.viewType);
+                }
+
+                return false;
+            });
+
+        window.tabGroups.close(orphanedTabs);
 
         this._disposables.push(
             commands.registerCommand(
@@ -403,7 +419,9 @@ export class ProofObligationPanel implements Disposable {
         commands.executeCommand("setContext", `vdm-vscode.pog.run`, false);
 
         // Clean up our resources
-        this._panel.dispose();
+        if (this._panel) {
+            this._panel.dispose();
+        }
 
         while (this._disposables.length) {
             this._disposables.pop().dispose();

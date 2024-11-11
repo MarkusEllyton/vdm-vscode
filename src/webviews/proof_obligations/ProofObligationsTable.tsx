@@ -112,8 +112,6 @@ export const ProofObligationsTable = ({
     const sortedPOs = sortPOs(pos, sortingState);
     const shouldRenderTable = !((pos.length === 0) && posInvalid)
 
-    console.log("Should render", shouldRenderTable, "because", pos.length, posInvalid)
-
     return (
         <>
             {shouldRenderTable ? (
