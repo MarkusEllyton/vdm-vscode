@@ -1,3 +1,6 @@
+### 1.5.1
+- Add support for PO code lenses.
+
 ### 1.5.0
 - Update VDMJ JARs to stable 4.6.0 release.
 - Fix default enabled plugins not always being enabled for users updating from an earlier version of the extension.

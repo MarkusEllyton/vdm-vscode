@@ -1,10 +1,10 @@
 {
     "name": "vdm-vscode",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "publisher": "overturetool",
     "engines": {
         "vscode": "^1.64.0",
-        "vdmj": "4.6.0"
+        "vdmj": "4.7.0-SNAPSHOT"
     },
     "displayName": "VDM VSCode",
     "description": "Support for the VDM modelling languages: VDM-SL, VDM++ and VDM-RT",
