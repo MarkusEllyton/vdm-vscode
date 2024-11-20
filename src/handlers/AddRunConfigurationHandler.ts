@@ -307,19 +307,21 @@ export class AddRunConfigurationHandler extends AutoDisposable {
         const flattenedArgs = args.flat();
 
         for await (let a of flattenedArgs) {
-            let value = await window.showInputBox({
+            const prefillPostfix = ` - [${a.name}: ${a.type}]`;
+            const prefillValue = a.value ? `${a.value}${prefillPostfix}` : null;
+            const value = await window.showInputBox({
                 prompt: `Enter value for [${a.name}: ${a.type}]`,
                 title: outlineString,
                 ignoreFocusOut: true,
                 placeHolder: `${a.name}: ${a.type}`,
-                value: a.value,
+                value: prefillValue,
             });
 
             if (value === undefined) {
                 return Promise.reject();
             }
 
-            a.value = value;
+            a.value = value.replace(prefillPostfix, "");
         }
     }
 
